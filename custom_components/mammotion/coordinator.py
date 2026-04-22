@@ -248,7 +248,10 @@ class MammotionBaseUpdateCoordinator[DataT](DataUpdateCoordinator[DataT]):
                 TransportType.CLOUD_MAMMOTION,
                 TransportType.BLE,
             ):
-                await handle.connect_transport(t_type)
+                try:
+                    await handle.connect_transport(t_type)
+                except Exception:  # noqa: BLE001
+                    LOGGER.debug("Transport connect failed for %s, will retry", t_type)
         else:
             for t_type in (
                 TransportType.CLOUD_ALIYUN,
