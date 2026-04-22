@@ -8,6 +8,9 @@ discovery on every connection.
 """
 
 from bleak import BleakClient
+import logging
 import pymammotion.transport.ble as _ble_module
 
+_logger = logging.getLogger(__name__)
 _ble_module.BleakClientWithServiceCache = BleakClient  # type: ignore[attr-defined]
+_logger.warning("BLE patch applied: BleakClientWithServiceCache replaced with BleakClient")
