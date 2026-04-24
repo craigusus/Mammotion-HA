@@ -86,25 +86,6 @@ PLATFORMS: list[Platform] = [
 type MammotionConfigEntry = ConfigEntry[MammotionDevices]
 
 
-def _get_unique_device_name(
-    hass: HomeAssistant,
-    entry: MammotionConfigEntry,
-    device_name: str,
-) -> str:
-    """Return a HA-unique device name, appending _2/_3/… when another entry already owns it."""
-    device_registry = dr.async_get(hass)
-    existing = device_registry.async_get_device(identifiers={(DOMAIN, device_name)})
-    if existing is None or entry.entry_id in existing.config_entries:
-        return device_name
-    counter = 2
-    while True:
-        candidate = f"{device_name}_{counter}"
-        existing = device_registry.async_get_device(identifiers={(DOMAIN, candidate)})
-        if existing is None or entry.entry_id in existing.config_entries:
-            return candidate
-        counter += 1
-
-
 async def _attach_ble_to_mower(
     hass: HomeAssistant,
     entry: MammotionConfigEntry,
@@ -267,7 +248,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: MammotionConfigEntry) ->
                     stay_connected_ble=stay_connected_ble,
                 )
 
-            unique_name = _get_unique_device_name(hass, entry, device.device_name)
+            unique_name = device.device_name
 
             maintenance_coordinator = MammotionMaintenanceUpdateCoordinator(
                 hass, entry, device, mammotion, unique_name=unique_name
@@ -345,7 +326,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: MammotionConfigEntry) ->
                     stay_connected_ble=stay_connected_ble,
                 )
 
-            rtk_unique_name = _get_unique_device_name(hass, entry, rtk.device_name)
+            rtk_unique_name = rtk.device_name
             rtk_coordinator = MammotionRTKCoordinator(
                 hass, entry, rtk, mammotion, unique_name=rtk_unique_name
             )
