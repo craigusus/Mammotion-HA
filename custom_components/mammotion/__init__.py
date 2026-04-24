@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from . import ble_patch as _  # noqa: F401
-
 from datetime import datetime
 
 from aiohttp import ClientConnectorError
