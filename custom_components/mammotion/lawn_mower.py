@@ -175,7 +175,7 @@ async def async_setup_entry(
         return next(
             (
                 m
-                for m in (entry.runtime_data.mowers if entry.runtime_data else [])
+                for m in (entry.runtime_data.mowers if getattr(entry, "runtime_data", None) else [])
                 if entity_entry.unique_id.startswith(
                     m.reporting_coordinator.unique_name
                 )
