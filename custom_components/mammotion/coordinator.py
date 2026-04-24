@@ -1124,7 +1124,6 @@ class MammotionReportUpdateCoordinator(MammotionBaseUpdateCoordinator[MowingDevi
 
         LOGGER.debug("Updated Mammotion device %s", self.device_name)
         self.update_failures = 0
-        await self.async_request_iot_sync()
         if data := self.manager.get_device_by_name(self.device_name):
             await self.async_save_data(data)
             return data
