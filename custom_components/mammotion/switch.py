@@ -424,14 +424,6 @@ class MammotionConfigAreaSwitchEntity(MammotionBaseEntity, SwitchEntity, Restore
     async def async_update(self) -> None:
         """Update the entity state."""
         self._attr_is_on = self._area in self.coordinator.operation_settings.areas
-        area_keys: set[int] = {
-            int(k)
-            for k in self.coordinator.data.map.area.keys()
-            if str(k).lstrip("-").isdigit()
-        }
-        if self._area not in area_keys:
-            await self.async_remove()
-            return
         self.async_write_ha_state()
 
     @property
@@ -464,11 +456,11 @@ def async_add_area_entities(
         all_current_areas = map_area_hashes
     else:
         # Trigger a re-fetch if map has hashes that aren't yet named.
+        # Only register named areas — unnamed hashes wait for the fetch to complete
+        # so they get their real name (and entity_id) on first registration.
         if map_area_hashes - area_name_hashes:
             coordinator.hass.async_create_task(coordinator.async_get_area_list())
-        # Include ALL known hashes so unnamed areas are still added with a generated
-        # name (the loop below handles the None-name case with "Area N" fallback).
-        all_current_areas = area_name_hashes | map_area_hashes
+        all_current_areas = area_name_hashes
 
     new_areas = all_current_areas - added_areas
     # Find the highest "Area N" number already in use so new auto-names don't
@@ -552,6 +544,14 @@ def async_add_area_entities(
                 del area_entities_by_name[n]
 
     if switch_entities:
+        registry = er.async_get(coordinator.hass)
+        for entity in switch_entities:
+            if entity.unique_id:
+                stale_entity_id = registry.async_get_entity_id(
+                    SWITCH_DOMAIN, DOMAIN, entity.unique_id
+                )
+                if stale_entity_id:
+                    registry.async_remove(stale_entity_id)
         async_add_entities(switch_entities)
 
 
