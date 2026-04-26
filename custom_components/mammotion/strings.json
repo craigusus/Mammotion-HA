@@ -113,7 +113,7 @@
         "name": "L2 Satellites (Co-Viewing)"
       },
       "positioning_mode": {
-        "name": "RTK position"
+        "name": "RTK fix quality"
       },
       "position_mode": {
         "name": "Position mode",
