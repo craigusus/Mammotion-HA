@@ -34,7 +34,6 @@ from pymammotion.utility.constant.device_constant import (
     AppConnectType,
     PosType,
     RTKPositionMode,
-    WorkMode,
     camera_brightness,
     device_connection,
     device_mode,
@@ -724,11 +723,8 @@ def async_add_task_area_entities(
             state_class=None,
             options=_TASK_AREA_OPTIONS,
             entity_category=EntityCategory.DIAGNOSTIC,
-            value_fn=lambda mower_data, h=area_hash: (
-                getattr(mower_data.events.work_tasks_event.hash_area_map.get(h), "name", None)
-                if mower_data.report_data.dev.sys_status
-                in (WorkMode.MODE_WORKING, WorkMode.MODE_PAUSE, WorkMode.MODE_RETURNING)
-                else None
+            value_fn=lambda mower_data, h=area_hash: getattr(
+                mower_data.events.work_tasks_event.hash_area_map.get(h), "name", None
             ),
         )
         entity = MammotionTaskAreaSensorEntity(coordinator, description)
