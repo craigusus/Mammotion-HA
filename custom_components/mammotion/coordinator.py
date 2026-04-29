@@ -254,6 +254,10 @@ class MammotionBaseUpdateCoordinator[DataT](DataUpdateCoordinator[DataT]):  # ty
         if handle.has_transport(TransportType.BLE):
             if handle.is_transport_connected(TransportType.BLE):
                 return True
+            if handle.prefer_ble:
+                # BLE registered and preferred but currently disconnected.
+                # _do_send will reconnect before sending — treat as online.
+                return True
         return bool(not handle.availability.mqtt_reported_offline)
 
     async def async_refresh_login(self, exc: Exception | None = None) -> None:
