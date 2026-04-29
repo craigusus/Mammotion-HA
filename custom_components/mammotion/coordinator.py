@@ -24,7 +24,6 @@ from pymammotion.aliyun.exceptions import (
     DeviceOfflineException,
     FailedRequestException,
     GatewayTimeoutException,
-    NoConnectionException,
     TooManyRequestsException,
 )
 from pymammotion.aliyun.model.dev_by_account_response import Device
@@ -374,7 +373,7 @@ class MammotionBaseUpdateCoordinator[DataT](DataUpdateCoordinator[DataT]):  # ty
             LOGGER.error(f"Gateway timeout exception: {ex.iot_id}")
             self.update_failures = 0
             return False
-        except (DeviceOfflineException, NoConnectionException):
+        except DeviceOfflineException:
             self.device_offline(device)
             # Fall back to BLE if the cloud path is unavailable
             try:
@@ -419,7 +418,7 @@ class MammotionBaseUpdateCoordinator[DataT](DataUpdateCoordinator[DataT]):  # ty
             LOGGER.error(f"Gateway timeout exception: {ex.iot_id}")
             self.update_failures = 0
             return False
-        except (DeviceOfflineException, NoConnectionException) as ex:
+        except DeviceOfflineException as ex:
             LOGGER.error(f"Device offline: {ex.iot_id}")
             self.device_offline(device)
             return False
