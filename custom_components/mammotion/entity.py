@@ -122,10 +122,11 @@ class MammotionBaseEntity(CoordinatorEntity[MammotionBaseUpdateCoordinator[Any]]
                 (CONNECTION_NETWORK_MAC, format_mac(mower.mower_state.wifi_mac))
             )
 
-        device_registry.async_update_device(
-            device.id,
-            new_connections=new_connections,
-        )
+        update_kwargs: dict = {"new_connections": new_connections}
+        nick_name = self.coordinator.device.nick_name
+        if nick_name and not device.name_by_user:
+            update_kwargs["name_by_user"] = nick_name
+        device_registry.async_update_device(device.id, **update_kwargs)
 
     @callback  # type: ignore[misc]
     def _handle_coordinator_update(self) -> None:
@@ -202,10 +203,11 @@ class MammotionBaseRTKEntity(CoordinatorEntity[MammotionRTKCoordinator]):  # typ
         if rtk_data.wifi_mac != "":
             new_connections.add((CONNECTION_NETWORK_MAC, format_mac(rtk_data.wifi_mac)))
 
-        device_registry.async_update_device(
-            device.id,
-            new_connections=new_connections,
-        )
+        update_kwargs: dict = {"new_connections": new_connections}
+        nick_name = self.coordinator.device.nick_name
+        if nick_name and not device.name_by_user:
+            update_kwargs["name_by_user"] = nick_name
+        device_registry.async_update_device(device.id, **update_kwargs)
 
 
 class MammotionCameraBaseEntity(Camera, ABC):  # type: ignore[misc]
