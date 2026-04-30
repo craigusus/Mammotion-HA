@@ -313,7 +313,7 @@
         "name": "Manual light on/off"
       },
       "night_light": {
-        "name": "Night light on/off"
+        "name": "Auto Lighting"
       }
     },
     "select": {
