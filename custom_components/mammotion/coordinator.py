@@ -576,9 +576,8 @@ class MammotionBaseUpdateCoordinator[DataT](DataUpdateCoordinator[DataT]):  # ty
     async def async_set_sidelight(self, on_off: int) -> None:
         """Set Sidelight."""
         await self.async_send_command(
-            "read_and_set_sidelight", is_sidelight=not bool(on_off), operate=1
+            "read_and_set_sidelight", is_sidelight=bool(on_off), operate=0
         )
-        # Mower echoes back operate=1 with enable omitted (defaults 0), so set state directly
         if self.data:
             self.data.mower_state.side_led.enable = int(on_off)
 
