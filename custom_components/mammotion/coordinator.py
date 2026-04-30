@@ -360,6 +360,14 @@ class MammotionBaseUpdateCoordinator[DataT](DataUpdateCoordinator[DataT]):  # ty
         """Send command via MammotionClient command queue."""
         device = self.manager.get_device_by_name(self.device_name)
         if device is None or not self.is_online():
+            handle = self.manager.mower(self.device_name)
+            has_ble = handle.has_transport(TransportType.BLE) if handle else False
+            prefer_ble = handle.prefer_ble if handle else False
+            mqtt_offline = handle.availability.mqtt_reported_offline if handle else "no handle"
+            LOGGER.warning(
+                "async_send_command dropped '%s' for %s: has_ble=%s prefer_ble=%s mqtt_offline=%s",
+                command, self.device_name, has_ble, prefer_ble, mqtt_offline,
+            )
             return False
 
         try:
