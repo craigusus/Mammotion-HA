@@ -1169,7 +1169,6 @@ class MammotionReportUpdateCoordinator(MammotionBaseUpdateCoordinator[MowingDevi
 
         LOGGER.debug("Updated Mammotion device %s", self.device_name)
         self.update_failures = 0
-        await self.async_read_sidelight()
         if DeviceType.is_yuka(self.device_name) or DeviceType.is_yuka_mini(self.device_name):
             await self.async_send_command("get_car_light", ids=1126)
             await self.async_send_command("get_car_light", ids=1123)
