@@ -100,7 +100,7 @@ SWITCH_ENTITIES: tuple[MammotionAsyncSwitchEntityDescription, ...] = (
         polling=True,
         poll_func=lambda coordinator: coordinator.async_read_sidelight(),
         is_on_func=lambda coordinator: bool(
-            coordinator.data.mower_state.side_led.operate
+            coordinator.data.mower_state.side_led.enable
         ),
         set_fn=lambda coordinator, value: coordinator.async_set_sidelight(int(value)),
         entity_category=EntityCategory.CONFIG,

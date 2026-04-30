@@ -568,15 +568,17 @@ class MammotionBaseUpdateCoordinator[DataT](DataUpdateCoordinator[DataT]):  # ty
 
     async def async_set_sidelight(self, on_off: int) -> None:
         """Set Sidelight."""
+        # is_sidelight=False → enable=1 (on), is_sidelight=True → enable=0 (off); operate=1 = write
         await self.async_send_command(
-            "read_and_set_sidelight", is_sidelight=bool(on_off), operate=0
+            "read_and_set_sidelight", is_sidelight=not bool(on_off), operate=1
         )
         await self.async_read_sidelight()
 
     async def async_read_sidelight(self) -> None:
-        """Set Sidelight."""
+        """Read Sidelight state from device."""
+        # operate=0 = read; mower echoes back current enable value without changing it
         await self.async_send_command(
-            "read_and_set_sidelight", is_sidelight=False, operate=1
+            "read_and_set_sidelight", is_sidelight=True, operate=0
         )
 
     async def async_set_manual_light(self, manual_ctrl: bool) -> None:
@@ -1119,6 +1121,10 @@ class MammotionReportUpdateCoordinator(MammotionBaseUpdateCoordinator[MowingDevi
 
         LOGGER.debug("Updated Mammotion device %s", self.device_name)
         self.update_failures = 0
+        await self.async_read_sidelight()
+        if DeviceType.is_yuka(self.device_name) or DeviceType.is_yuka_mini(self.device_name):
+            await self.async_send_command("get_car_light", ids=1126)
+            await self.async_send_command("get_car_light", ids=1123)
         if data := self.manager.get_device_by_name(self.device_name):
             await self.async_save_data(data)
             return data
