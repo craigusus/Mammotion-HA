@@ -1134,7 +1134,7 @@ class MammotionReportUpdateCoordinator(MammotionBaseUpdateCoordinator[MowingDevi
         )
 
         # self._on_stop: list[CALLBACK_TYPE] = []
-        # self.service_info: BluetoothServiceInfoBleak | None = None
+        self.service_info: BluetoothServiceInfoBleak | None = None
 
     # @callback
     # def _async_handle_bluetooth_event(
