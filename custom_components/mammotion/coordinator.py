@@ -10,13 +10,12 @@ from datetime import timedelta
 from typing import TYPE_CHECKING, Any, cast
 
 import betterproto2
-from habluetooth import BluetoothServiceInfoBleak
-from habluetooth.models import BluetoothScanningMode
+from habluetooth import BluetoothScanningMode
+from habluetooth.models import BluetoothServiceInfoBleak
 from homeassistant.components import bluetooth
 from homeassistant.components.bluetooth import (
     BluetoothCallbackMatcher,
-    BluetoothChange,
-    async_register_callback,
+    async_register_callback, BluetoothChange,
 )
 from homeassistant.const import CONF_PASSWORD
 from homeassistant.core import CALLBACK_TYPE, HassJob, HomeAssistant, callback
@@ -1133,39 +1132,39 @@ class MammotionReportUpdateCoordinator(MammotionBaseUpdateCoordinator[MowingDevi
             unique_name=unique_name,
         )
 
-        # self._on_stop: list[CALLBACK_TYPE] = []
+        self._on_stop: list[CALLBACK_TYPE] = []
         self.service_info: BluetoothServiceInfoBleak | None = None
 
-    # @callback
-    # def _async_handle_bluetooth_event(
-    #     self,
-    #     service_info: BluetoothServiceInfoBleak,
-    #     change: BluetoothChange,
-    # ) -> None:
-    #     """Handle a bluetooth event."""
-    #     self.service_info = service_info
-    #
-    # @callback
-    # def _async_start(self) -> None:
-    #     """Start the callbacks."""
-    #     if self.data.mower_state.ble_mac != "":
-    #         self._on_stop.append(
-    #             async_register_callback(
-    #                 self.hass,
-    #                 self._async_handle_bluetooth_event,
-    #                 BluetoothCallbackMatcher(
-    #                     address=self.data.mower_state.ble_mac, connectable=True
-    #                 ),
-    #                 BluetoothScanningMode.ACTIVE,
-    #             )
-    #         )
-    #
-    # @callback
-    # def _async_stop(self) -> None:
-    #     """Stop the callbacks."""
-    #     for unsub in self._on_stop:
-    #         unsub()
-    #     self._on_stop.clear()
+    @callback
+    def _async_handle_bluetooth_event(
+        self,
+        service_info: BluetoothServiceInfoBleak,
+        change: BluetoothChange,
+    ) -> None:
+        """Handle a bluetooth event."""
+        self.service_info = service_info
+
+    @callback
+    def _async_start(self) -> None:
+        """Start the callbacks."""
+        if self.data.mower_state.ble_mac != "":
+            self._on_stop.append(
+                async_register_callback(
+                    self.hass,
+                    self._async_handle_bluetooth_event,
+                    BluetoothCallbackMatcher(
+                        address=self.data.mower_state.ble_mac, connectable=True
+                    ),
+                    BluetoothScanningMode.ACTIVE,
+                )
+            )
+
+    @callback
+    def _async_stop(self) -> None:
+        """Stop the callbacks."""
+        for unsub in self._on_stop:
+            unsub()
+        self._on_stop.clear()
 
     def get_coordinator_data(self, device: MowingDevice) -> MowingDevice:
         """Get coordinator data."""
