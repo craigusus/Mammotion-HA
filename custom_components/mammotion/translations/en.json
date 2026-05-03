@@ -310,10 +310,10 @@
         "name": "Turn Updates On/Off"
       },
       "manual_light": {
-        "name": "Manual light on/off"
+        "name": "Manual Light on/off"
       },
       "night_light": {
-        "name": "Auto Lighting"
+        "name": "Auto Lighting on/off"
       }
     },
     "select": {
