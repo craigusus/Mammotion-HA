@@ -150,6 +150,7 @@ LUBA_2_YUKA_ONLY_TYPES: tuple[MammotionSensorEntityDescription, ...] = (
         state_class=None,
         device_class=SensorDeviceClass.ENUM,
         native_unit_of_measurement=None,
+        icon="mdi:camera-marker",
         value_fn=lambda mower_data: VioState(
             mower_data.report_data.vision_info.vio_state
         ).name,
@@ -229,6 +230,7 @@ SENSOR_TYPES: tuple[MammotionSensorEntityDescription, ...] = (
     ),
     MammotionSensorEntityDescription(
         key="wifi_ip_address",
+        icon="mdi:ip-network",
         value_fn=lambda mower_data: mower_data.mower_state.ip_address or None,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
@@ -306,6 +308,7 @@ SENSOR_TYPES: tuple[MammotionSensorEntityDescription, ...] = (
     ),
     MammotionSensorEntityDescription(
         key="non_work_hours",
+        icon="mdi:clock-off",
         value_fn=lambda mower_data: MowerDataFormatter.format_time_range(
             mower_data.non_work_hours.start_time,
             mower_data.non_work_hours.end_time,
@@ -349,6 +352,7 @@ SENSOR_TYPES: tuple[MammotionSensorEntityDescription, ...] = (
         state_class=None,
         device_class=SensorDeviceClass.ENUM,
         native_unit_of_measurement=None,
+        icon="mdi:crosshairs-gps",
         value_fn=lambda mower_data: str(
             RTKStatus.from_value(mower_data.report_data.rtk.status)
         ),
@@ -358,6 +362,7 @@ SENSOR_TYPES: tuple[MammotionSensorEntityDescription, ...] = (
         key="position_mode",
         state_class=None,
         device_class=SensorDeviceClass.ENUM,
+        icon="mdi:map-marker-check",
         value_fn=lambda mower_data: RTKPositionMode(
             mower_data.report_data.basestation_info.rtk_status
         ).name,
@@ -376,12 +381,14 @@ SENSOR_TYPES: tuple[MammotionSensorEntityDescription, ...] = (
     MammotionSensorEntityDescription(
         key="rtk_latitude",
         native_unit_of_measurement=DEGREE,
+        icon="mdi:latitude",
         value_fn=lambda mower_data: mower_data.location.RTK.latitude * 180.0 / math.pi,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
     MammotionSensorEntityDescription(
         key="rtk_longitude",
         native_unit_of_measurement=DEGREE,
+        icon="mdi:longitude",
         value_fn=lambda mower_data: mower_data.location.RTK.longitude * 180.0 / math.pi,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
