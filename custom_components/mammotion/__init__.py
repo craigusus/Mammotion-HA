@@ -423,7 +423,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: MammotionConfigEntry) ->
                 device_name=device_name,
                 ble_device=ble_device,
                 initial_device=MowingDevice(name=device_name),
-                disconnect_on_idle=not stay_connected_ble,
             )
 
             _register_ble_reconnect_callback(
