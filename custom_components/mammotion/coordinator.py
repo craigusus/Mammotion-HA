@@ -1325,6 +1325,8 @@ class MammotionMaintenanceUpdateCoordinator(MammotionBaseUpdateCoordinator[Maint
                 "read_job_do_not_disturb", "todev_unable_time_set"
             )
 
+            await self.async_send_command("get_device_network_info")
+
         except DeviceOfflineException as ex:
             if ex.iot_id == self.device.iot_id:
                 device = self.manager.get_device_by_name(self.device_name)
