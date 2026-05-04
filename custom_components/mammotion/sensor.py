@@ -308,7 +308,7 @@ SENSOR_TYPES: tuple[MammotionSensorEntityDescription, ...] = (
     ),
     MammotionSensorEntityDescription(
         key="non_work_hours",
-        icon="mdi:clock-off",
+        icon="mdi:clock-remove",
         value_fn=lambda mower_data: MowerDataFormatter.format_time_range(
             mower_data.non_work_hours.start_time,
             mower_data.non_work_hours.end_time,
