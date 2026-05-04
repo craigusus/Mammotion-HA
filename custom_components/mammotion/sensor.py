@@ -228,6 +228,11 @@ SENSOR_TYPES: tuple[MammotionSensorEntityDescription, ...] = (
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
     MammotionSensorEntityDescription(
+        key="wifi_ip_address",
+        value_fn=lambda mower_data: mower_data.mower_state.ip_address or None,
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
+    MammotionSensorEntityDescription(
         key="mnet_rssi",
         state_class=SensorStateClass.MEASUREMENT,
         device_class=SensorDeviceClass.SIGNAL_STRENGTH,

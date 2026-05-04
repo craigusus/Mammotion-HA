@@ -77,6 +77,9 @@
       "wifi_rssi": {
         "name": "WiFi RSSI"
       },
+      "wifi_ip_address": {
+        "name": "Wi-Fi IP address"
+      },
       "mnet_rssi": {
         "name": "Mobile RSSI"
       },
