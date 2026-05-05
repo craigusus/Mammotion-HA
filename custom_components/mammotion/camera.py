@@ -373,7 +373,7 @@ async def async_setup_platform_services(
                 speed=speed, use_wifi=use_wifi
             )
 
-    async def handle_move_right(call) -> None:
+    async def handle_move_right(call: ServiceCall) -> None:
         entity_id = call.data["entity_id"]
 
         # Check if speed parameter exists and validate it
@@ -404,7 +404,7 @@ async def async_setup_platform_services(
                 speed=speed, use_wifi=use_wifi
             )
 
-    async def handle_move_backward(call) -> None:
+    async def handle_move_backward(call: ServiceCall) -> None:
         entity_id = call.data["entity_id"]
 
         # Check if speed parameter exists and validate it
