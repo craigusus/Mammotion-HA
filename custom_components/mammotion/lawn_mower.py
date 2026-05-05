@@ -231,6 +231,8 @@ class MammotionLawnMowerEntity(MammotionBaseEntity, LawnMowerEntity):  # type: i
         """Start mowing."""
         trans_key = "pause_failed"
 
+        await self.coordinator.async_ensure_fresh_state()
+
         if kwargs:
             entity_ids = kwargs.pop("areas", [])
             attributes = [
@@ -258,9 +260,6 @@ class MammotionLawnMowerEntity(MammotionBaseEntity, LawnMowerEntity):  # type: i
             modify_plan = False
             plan_only = False
 
-        # Ensure state is fresh before reading mode — fire a snapshot if >2 min stale.
-        await self.coordinator.async_ensure_fresh_state()
-
         # check if job in progress
         #
         mode = self.rpt_dev_status.sys_status
@@ -287,9 +286,10 @@ class MammotionLawnMowerEntity(MammotionBaseEntity, LawnMowerEntity):  # type: i
 
                 if mode == WorkMode.MODE_RETURNING:
                     trans_key = "dock_cancel_failed"
-                    await self.coordinator.async_send_command("cancel_return_to_dock")
+                    await self.coordinator.async_send_and_wait(
+                        "cancel_return_to_dock", "todev_taskctrl_ack"
+                    )
                     await self.coordinator.async_request_report_snapshot()
-                    # TODO is rpt_dev_status updated on iot sync?
                     mode = self.rpt_dev_status.sys_status
                 if mode == WorkMode.MODE_PAUSE:
                     trans_key = "resume_failed"
@@ -324,7 +324,7 @@ class MammotionLawnMowerEntity(MammotionBaseEntity, LawnMowerEntity):  # type: i
         """Start docking."""
         trans_key = "pause_failed"
 
-        await self.coordinator.async_ensure_fresh_state()
+        await self.coordinator.async_start_report_stream()
         charge_state = self.rpt_dev_status.charge_state
         mode = self.rpt_dev_status.sys_status
         if mode is None:

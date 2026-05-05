@@ -232,22 +232,6 @@ class MammotionBaseUpdateCoordinator[DataT](DataUpdateCoordinator[DataT]):  # ty
         """Return stream data."""
         return self._stream_data
 
-    async def join_webrtc_channel(self) -> None:
-        """Start stream command."""
-        handle = self.manager.mower(self.device_name)
-        if handle is None:
-            return
-        command = self.commands.device_agora_join_channel_with_position(enter_state=1)
-        await self.async_send_cloud_command(handle.iot_id, command)
-
-    async def leave_webrtc_channel(self) -> None:
-        """End stream command."""
-        handle = self.manager.mower(self.device_name)
-        if handle is None:
-            return
-        command = self.commands.device_agora_join_channel_with_position(enter_state=0)
-        await self.async_send_cloud_command(handle.iot_id, command)
-
     async def set_scheduled_updates(self, enabled: bool) -> None:
         """Enable or disable scheduled polling updates for this device."""
         device = self.manager.get_device_by_name(self.device_name)
@@ -290,9 +274,9 @@ class MammotionBaseUpdateCoordinator[DataT](DataUpdateCoordinator[DataT]):  # ty
         if not self.has_cloud_account:
             return
 
-        if isinstance(exc, LoginFailedError):
+        if isinstance(exc, (LoginFailedError, ReLoginRequiredError)):
             raise ConfigEntryAuthFailed(
-                f"Login failed for Mammotion account: {exc.reason}"
+                f"Login failed for Mammotion account: {exc}"
             ) from exc
         try:
             if (
@@ -748,7 +732,7 @@ class MammotionBaseUpdateCoordinator[DataT](DataUpdateCoordinator[DataT]):  # ty
             await self.async_send_and_wait(command_str, response, **kwargs)
         else:
             await self.async_send_command(command_str, **kwargs)
-        await self.async_start_report_stream()
+        await self.async_get_reports(count=5)
 
     async def async_request_report_snapshot(self) -> None:
         """Fire a one-shot count=1 snapshot; no-op while BLE stream is active."""
@@ -757,6 +741,10 @@ class MammotionBaseUpdateCoordinator[DataT](DataUpdateCoordinator[DataT]):  # ty
     async def async_start_report_stream(self, duration_ms: int = 300_000) -> None:
         """Start a transient continuous report window via the library."""
         await self.manager.start_report_stream(self.device_name, duration_ms)
+
+    async def async_get_reports(self, count: int = 5) -> None:
+        """Get reports from the device"""
+        await self.manager.request_reports(self.device_name, count)
 
     async def async_ensure_fresh_state(self) -> None:
         """Fire a one-shot snapshot if device state is older than 2 minutes."""
@@ -1149,6 +1137,7 @@ class MammotionReportUpdateCoordinator(MammotionBaseUpdateCoordinator[MowingDevi
         if ble := handle.get_transport(TransportType.BLE):
             if not ble.is_connected:
                 cast(BLETransport, ble).set_ble_device(self.service_info.device)
+                self.hass.create_task(ble.connect())
 
     @callback
     def _async_start(self) -> None:
