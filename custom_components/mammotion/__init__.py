@@ -230,8 +230,13 @@ def _register_ble_reconnect_callback(
         change: BluetoothChange,
     ) -> None:
         handle = mammotion.mower(device_name)
-        if handle is None or handle.has_transport(TransportType.BLE):
+        if handle is None:
             return
+        # Always push the freshest BLEDevice into the transport.  add_ble_to_device
+        # is idempotent: it calls set_ble_device() if a transport already exists, or
+        # creates a new transport if one doesn't.  We must not short-circuit on
+        # has_transport() here because a device registered at startup without being
+        # in range has a transport with no BLEDevice — it needs updating too.
         hass.async_create_task(
             mammotion.add_ble_to_device(device_name, service_info.device)
         )
@@ -406,24 +411,39 @@ async def async_setup_entry(hass: HomeAssistant, entry: MammotionConfigEntry) ->
                 )
             )
 
-    elif addresses:
+    elif addresses and not cloud_available:
         # BLE-only mode: either the user set use_wifi=False, has no account, or
         # cloud login failed and we are falling back to BLE for each known device.
         for device_name, ble_address in addresses.items():
             ble_device = bluetooth.async_ble_device_from_address(
                 hass, ble_address.upper(), True
             )
-            if ble_device is None:
-                raise ConfigEntryNotReady(
-                    f"BLE device {device_name} ({ble_address}) not in range"
-                )
 
-            await mammotion.add_ble_only_device(
-                device_id=device_name,
-                device_name=device_name,
-                ble_device=ble_device,
-                initial_device=MowingDevice(name=device_name),
-            )
+            # Register the device regardless of whether it is currently in range.
+            # If ble_device is None the transport is created with just the address;
+            # _register_ble_reconnect_callback will push the BLEDevice when the
+            # device is first seen.  Raising ConfigEntryNotReady here retries the
+            # ENTIRE entry, orphaning any already-registered devices and their
+            # active BLE connections.
+            if ble_device is not None:
+                await mammotion.add_ble_only_device(
+                    device_id=device_name,
+                    device_name=device_name,
+                    ble_device=ble_device,
+                    initial_device=MowingDevice(name=device_name),
+                )
+            else:
+                LOGGER.info(
+                    "BLE device %s (%s) not in range at startup — registering and waiting",
+                    device_name,
+                    ble_address,
+                )
+                await mammotion.add_ble_only_device(
+                    device_id=device_name,
+                    device_name=device_name,
+                    ble_address=ble_address,
+                    initial_device=MowingDevice(name=device_name),
+                )
 
             _register_ble_reconnect_callback(
                 hass, entry, mammotion, device_name, ble_address
@@ -449,10 +469,19 @@ async def async_setup_entry(hass: HomeAssistant, entry: MammotionConfigEntry) ->
             )
 
             await report_coordinator.async_restore_data()
-            await version_coordinator.async_config_entry_first_refresh()
-            await report_coordinator.async_config_entry_first_refresh()
-            await maintenance_coordinator.async_config_entry_first_refresh()
-            await error_coordinator.async_config_entry_first_refresh()
+            if ble_device is not None:
+                await version_coordinator.async_config_entry_first_refresh()
+                await report_coordinator.async_config_entry_first_refresh()
+                await maintenance_coordinator.async_config_entry_first_refresh()
+                await error_coordinator.async_config_entry_first_refresh()
+            else:
+                # Device not in range — do a best-effort refresh that won't raise
+                # ConfigEntryNotReady.  Coordinators will retry on their normal
+                # schedule; entities show unavailable until the device connects.
+                await version_coordinator.async_refresh()
+                await report_coordinator.async_refresh()
+                await maintenance_coordinator.async_refresh()
+                await error_coordinator.async_refresh()
             await map_coordinator._async_setup()
 
             mammotion_mowers.append(
@@ -602,7 +631,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: MammotionConfigEntry) -
                 if handle := mower.api.mower(mower.name):
                     await handle.stop()
                 mower.api.teardown_device_watchers(mower.name)
-                mower.api.remove_device(mower.name)
+                await mower.api.remove_device(mower.name)
             except TimeoutError:
                 """Do nothing as this sometimes occurs with disconnecting BLE."""
     return bool(unload_ok)

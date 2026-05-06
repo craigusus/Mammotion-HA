@@ -69,7 +69,7 @@ from pymammotion.transport.base import (
     TransportType,
 )
 from pymammotion.transport.ble import BLETransport
-from pymammotion.utility.constant import WorkMode
+from pymammotion.utility.constant import MOWING_ACTIVE_MODES, WorkMode
 from pymammotion.utility.device_type import DeviceType
 from webrtc_models import RTCIceServer
 
@@ -1277,6 +1277,7 @@ class MammotionMaintenanceUpdateCoordinator(MammotionBaseUpdateCoordinator[Maint
         mowing_device = self.manager.get_device_by_name(self.device_name)
         if self.data is None:
             self.data = mowing_device.report_data.maintenance
+        self._prev_sys_status: int | None = None
 
     def get_coordinator_data(self, device: MowingDevice) -> Maintain:
         """Get coordinator data."""
@@ -1286,26 +1287,20 @@ class MammotionMaintenanceUpdateCoordinator(MammotionBaseUpdateCoordinator[Maint
         data = cast(MowerDevice, snapshot.raw)
         self.async_set_updated_data(data.report_data.maintenance)
 
+    async def _on_sys_status_changed(self, sys_status: int) -> None:
+        """Fetch maintenance data when the mower transitions from working to ready."""
+        was_working = self._prev_sys_status in MOWING_ACTIVE_MODES
+        self._prev_sys_status = sys_status
+        if was_working and sys_status == WorkMode.MODE_READY:
+            try:
+                await self.async_send_command("get_maintenance")
+            except (DeviceOfflineException, GatewayTimeoutException):
+                pass
+
     async def _async_update_data(self) -> Maintain:
         """Get data from the device."""
         if data := await super()._async_update_data():
             return data
-
-        try:
-            await self.async_send_command("get_maintenance")
-
-            await self.async_send_and_wait(
-                "read_job_do_not_disturb", "todev_unable_time_set"
-            )
-
-        except DeviceOfflineException as ex:
-            if ex.iot_id == self.device.iot_id:
-                device = self.manager.get_device_by_name(self.device_name)
-                assert device is not None
-                self.device_offline(device)
-                return device.report_data.maintenance
-        except GatewayTimeoutException:
-            pass
 
         _dev = self.manager.get_device_by_name(self.device.device_name)
         assert _dev is not None
@@ -1314,6 +1309,20 @@ class MammotionMaintenanceUpdateCoordinator(MammotionBaseUpdateCoordinator[Maint
     async def _async_setup(self) -> None:
         """Setup maintenance coordinator."""
         await super()._async_setup()
+
+        if handle := self.manager.mower(self.device_name):
+            handle.watch_field(
+                lambda s: s.raw.report_data.dev.sys_status,
+                self._on_sys_status_changed,
+            )
+
+        try:
+            await self.async_send_command("get_maintenance")
+            await self.async_send_and_wait(
+                "read_job_do_not_disturb", "todev_unable_time_set"
+            )
+        except (DeviceOfflineException, GatewayTimeoutException):
+            pass
 
 
 class MammotionDeviceVersionUpdateCoordinator(
