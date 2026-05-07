@@ -69,7 +69,7 @@ from pymammotion.transport.base import (
     TransportType,
 )
 from pymammotion.transport.ble import BLETransport
-from pymammotion.utility.constant import WorkMode
+from pymammotion.utility.constant import MOWING_ACTIVE_MODES, WorkMode
 from pymammotion.utility.device_type import DeviceType
 from webrtc_models import RTCIceServer
 
@@ -232,22 +232,6 @@ class MammotionBaseUpdateCoordinator[DataT](DataUpdateCoordinator[DataT]):  # ty
         """Return stream data."""
         return self._stream_data
 
-    async def join_webrtc_channel(self) -> None:
-        """Start stream command."""
-        handle = self.manager.mower(self.device_name)
-        if handle is None:
-            return
-        command = self.commands.device_agora_join_channel_with_position(enter_state=1)
-        await self.async_send_cloud_command(handle.iot_id, command)
-
-    async def leave_webrtc_channel(self) -> None:
-        """End stream command."""
-        handle = self.manager.mower(self.device_name)
-        if handle is None:
-            return
-        command = self.commands.device_agora_join_channel_with_position(enter_state=0)
-        await self.async_send_cloud_command(handle.iot_id, command)
-
     async def set_scheduled_updates(self, enabled: bool) -> None:
         """Enable or disable scheduled polling updates for this device."""
         device = self.manager.get_device_by_name(self.device_name)
@@ -294,9 +278,9 @@ class MammotionBaseUpdateCoordinator[DataT](DataUpdateCoordinator[DataT]):  # ty
         if not self.has_cloud_account:
             return
 
-        if isinstance(exc, LoginFailedError):
+        if isinstance(exc, (LoginFailedError, ReLoginRequiredError)):
             raise ConfigEntryAuthFailed(
-                f"Login failed for Mammotion account: {exc.reason}"
+                f"Login failed for Mammotion account: {exc}"
             ) from exc
         try:
             if (
@@ -771,6 +755,10 @@ class MammotionBaseUpdateCoordinator[DataT](DataUpdateCoordinator[DataT]):  # ty
         """Start a transient continuous report window via the library."""
         await self.manager.start_report_stream(self.device_name, duration_ms)
 
+    async def async_get_reports(self, count: int = 5) -> None:
+        """Get reports from the device"""
+        await self.manager.request_reports(self.device_name, count)
+
     async def async_ensure_fresh_state(self) -> None:
         """Fire a one-shot snapshot if device state is older than 2 minutes."""
         await self.manager.ensure_fresh_state(self.device_name, max_age_s=120.0)
@@ -1162,6 +1150,7 @@ class MammotionReportUpdateCoordinator(MammotionBaseUpdateCoordinator[MowingDevi
         if ble := handle.get_transport(TransportType.BLE):
             if not ble.is_connected:
                 cast(BLETransport, ble).set_ble_device(self.service_info.device)
+                self.hass.create_task(ble.connect())
 
     @callback
     def _async_start(self) -> None:
@@ -1304,6 +1293,7 @@ class MammotionMaintenanceUpdateCoordinator(MammotionBaseUpdateCoordinator[Maint
         mowing_device = self.manager.get_device_by_name(self.device_name)
         if self.data is None:
             self.data = mowing_device.report_data.maintenance
+        self._prev_sys_status: int | None = None
 
     def get_coordinator_data(self, device: MowingDevice) -> Maintain:
         """Get coordinator data."""
@@ -1313,28 +1303,20 @@ class MammotionMaintenanceUpdateCoordinator(MammotionBaseUpdateCoordinator[Maint
         data = cast(MowerDevice, snapshot.raw)
         self.async_set_updated_data(data.report_data.maintenance)
 
+    async def _on_sys_status_changed(self, sys_status: int) -> None:
+        """Fetch maintenance data when the mower transitions from working to ready."""
+        was_working = self._prev_sys_status in MOWING_ACTIVE_MODES
+        self._prev_sys_status = sys_status
+        if was_working and sys_status == WorkMode.MODE_READY:
+            try:
+                await self.async_send_command("get_maintenance")
+            except (DeviceOfflineException, GatewayTimeoutException):
+                pass
+
     async def _async_update_data(self) -> Maintain:
         """Get data from the device."""
         if data := await super()._async_update_data():
             return data
-
-        try:
-            await self.async_send_command("get_maintenance")
-
-            await self.async_send_and_wait(
-                "read_job_do_not_disturb", "todev_unable_time_set"
-            )
-
-            await self.async_send_command("get_device_network_info")
-
-        except DeviceOfflineException as ex:
-            if ex.iot_id == self.device.iot_id:
-                device = self.manager.get_device_by_name(self.device_name)
-                assert device is not None
-                self.device_offline(device)
-                return device.report_data.maintenance
-        except GatewayTimeoutException:
-            pass
 
         _dev = self.manager.get_device_by_name(self.device.device_name)
         assert _dev is not None
@@ -1343,6 +1325,21 @@ class MammotionMaintenanceUpdateCoordinator(MammotionBaseUpdateCoordinator[Maint
     async def _async_setup(self) -> None:
         """Setup maintenance coordinator."""
         await super()._async_setup()
+
+        if handle := self.manager.mower(self.device_name):
+            handle.watch_field(
+                lambda s: s.raw.report_data.dev.sys_status,
+                self._on_sys_status_changed,
+            )
+
+        try:
+            await self.async_send_command("get_maintenance")
+            await self.async_send_and_wait(
+                "read_job_do_not_disturb", "todev_unable_time_set"
+            )
+            await self.async_send_command("get_device_network_info")
+        except (DeviceOfflineException, GatewayTimeoutException):
+            pass
 
 
 class MammotionDeviceVersionUpdateCoordinator(

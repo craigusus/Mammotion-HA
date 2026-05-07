@@ -9,7 +9,11 @@ from bleak_retry_connector import BleakNotFoundError
 from pymammotion.aliyun.exceptions import CheckSessionException
 from pymammotion.http.model.http import UnauthorizedException
 from pymammotion.transport import AuthError
-from pymammotion.transport.base import LoginFailedError, NoTransportAvailableError
+from pymammotion.transport.base import (
+    LoginFailedError,
+    NoTransportAvailableError,
+    ReLoginRequiredError,
+)
 from pymammotion.utility.constant import WorkMode
 
 DOMAIN: Final = "mammotion"
@@ -34,6 +38,7 @@ EXPIRED_CREDENTIAL_EXCEPTIONS = (
     AuthError,
     UnauthorizedException,
     LoginFailedError,
+    ReLoginRequiredError,
 )
 
 CONF_HAS_CLOUD_ACCOUNT: Final = "has_cloud_account"

@@ -175,7 +175,6 @@ class MammotionWebRTCCamera(MammotionCameraBaseEntity):
 
         try:
             # Get stream data (appid, channelName, token, uid)
-            await self.coordinator.join_webrtc_channel()
             if not stream_data or stream_data.data is None:
                 _LOGGER.error("No stream data available for WebRTC offer")
                 send_message(
@@ -276,7 +275,7 @@ async def async_setup_platform_services(
 ) -> None:
     """Register custom services for streaming."""
 
-    def _get_mower_by_entity_id(entity_id: str):
+    def _get_mower_by_entity_id(entity_id: str) -> MammotionMowerData | None:
         state = hass.states.get(entity_id)
         name = state.attributes.get("model_name")
         return next(
@@ -288,7 +287,7 @@ async def async_setup_platform_services(
             None,
         )
 
-    async def handle_refresh_stream(call) -> None:
+    async def handle_refresh_stream(call: ServiceCall) -> None:
         entity_id = call.data["entity_id"]
         mower: MammotionMowerData = _get_mower_by_entity_id(entity_id)
         if mower:
@@ -299,18 +298,6 @@ async def async_setup_platform_services(
 
             mower.reporting_coordinator.set_stream_data(stream_data)
             mower.reporting_coordinator.async_update_listeners()
-
-    async def handle_start_video(call) -> None:
-        entity_id = call.data["entity_id"]
-        mower: MammotionMowerData = _get_mower_by_entity_id(entity_id)
-        if mower:
-            await mower.reporting_coordinator.join_webrtc_channel()
-
-    async def handle_stop_video(call) -> None:
-        entity_id = call.data["entity_id"]
-        mower: MammotionMowerData = _get_mower_by_entity_id(entity_id)
-        if mower:
-            await mower.reporting_coordinator.leave_webrtc_channel()
 
     async def handle_get_tokens(call: ServiceCall) -> ServiceResponse:
         entity_id = call.data["entity_id"]
@@ -324,7 +311,7 @@ async def async_setup_platform_services(
             return stream_data.data.to_dict()
         return {}
 
-    async def handle_move_forward(call) -> None:
+    async def handle_move_forward(call: ServiceCall) -> None:
         entity_id = call.data["entity_id"]
 
         # Check if speed parameter exists and validate it
@@ -355,7 +342,7 @@ async def async_setup_platform_services(
                 speed=speed, use_wifi=use_wifi
             )
 
-    async def handle_move_left(call) -> None:
+    async def handle_move_left(call: ServiceCall) -> None:
         entity_id = call.data["entity_id"]
 
         # Check if speed parameter exists and validate it
@@ -386,7 +373,7 @@ async def async_setup_platform_services(
                 speed=speed, use_wifi=use_wifi
             )
 
-    async def handle_move_right(call) -> None:
+    async def handle_move_right(call: ServiceCall) -> None:
         entity_id = call.data["entity_id"]
 
         # Check if speed parameter exists and validate it
@@ -417,7 +404,7 @@ async def async_setup_platform_services(
                 speed=speed, use_wifi=use_wifi
             )
 
-    async def handle_move_backward(call) -> None:
+    async def handle_move_backward(call: ServiceCall) -> None:
         entity_id = call.data["entity_id"]
 
         # Check if speed parameter exists and validate it
@@ -449,8 +436,6 @@ async def async_setup_platform_services(
             )
 
     hass.services.async_register("mammotion", "refresh_stream", handle_refresh_stream)
-    hass.services.async_register("mammotion", "start_video", handle_start_video)
-    hass.services.async_register("mammotion", "stop_video", handle_stop_video)
     hass.services.async_register(
         "mammotion",
         "get_tokens",
