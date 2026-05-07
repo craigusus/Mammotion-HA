@@ -744,7 +744,7 @@ class MammotionBaseUpdateCoordinator[DataT](DataUpdateCoordinator[DataT]):  # ty
 
     async def async_get_reports(self, count: int = 5) -> None:
         """Get reports from the device"""
-        await self.manager.request_reports(self.device_name, count)
+        await self.manager.request_reports(self.device_name, count=count)
 
     async def async_ensure_fresh_state(self) -> None:
         """Fire a one-shot snapshot if device state is older than 2 minutes."""
