@@ -575,11 +575,10 @@ class MammotionBaseUpdateCoordinator[DataT](DataUpdateCoordinator[DataT]):  # ty
         await self.async_send_command(
             "read_and_set_sidelight", is_sidelight=bool(on_off), operate=0
         )
-        if self.data:
-            self.data.mower_state.side_led.enable = int(on_off)
+        await self.async_read_sidelight()
 
     async def async_read_sidelight(self) -> None:
-        """Read Sidelight state from device."""
+        """Set Sidelight."""
         await self.async_send_command(
             "read_and_set_sidelight", is_sidelight=False, operate=1
         )
@@ -757,7 +756,7 @@ class MammotionBaseUpdateCoordinator[DataT](DataUpdateCoordinator[DataT]):  # ty
 
     async def async_get_reports(self, count: int = 5) -> None:
         """Get reports from the device"""
-        await self.manager.request_reports(self.device_name, count)
+        await self.manager.request_reports(self.device_name, count=count)
 
     async def async_ensure_fresh_state(self) -> None:
         """Fire a one-shot snapshot if device state is older than 2 minutes."""
