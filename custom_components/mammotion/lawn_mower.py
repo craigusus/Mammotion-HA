@@ -353,7 +353,7 @@ class MammotionLawnMowerEntity(MammotionBaseEntity, LawnMowerEntity):  # type: i
                     translation_domain=DOMAIN, translation_key=trans_key
                 ) from exc
             finally:
-                await self.coordinator.async_get_reports(count=5)
+                await self.coordinator.async_request_report_snapshot()
 
     async def async_pause(self) -> None:
         """Pause mower."""
