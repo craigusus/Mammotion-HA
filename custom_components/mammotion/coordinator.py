@@ -769,7 +769,7 @@ class MammotionBaseUpdateCoordinator[DataT](DataUpdateCoordinator[DataT]):  # ty
             await self.async_send_and_wait(command_str, response, **kwargs)
         else:
             await self.async_send_command(command_str, **kwargs)
-        await self.async_start_report_stream()
+        await self.async_get_reports(count=5)
 
     async def async_request_report_snapshot(self) -> None:
         """Fire a one-shot count=1 snapshot; no-op while BLE stream is active."""
