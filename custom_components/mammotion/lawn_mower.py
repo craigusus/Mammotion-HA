@@ -337,7 +337,6 @@ class MammotionLawnMowerEntity(MammotionBaseEntity, LawnMowerEntity):  # type: i
             WorkMode.MODE_READY,
             WorkMode.MODE_RETURNING,
         ):
-            await self.coordinator.async_start_report_stream()
             try:
                 if mode == WorkMode.MODE_WORKING:
                     trans_key = "pause_failed"

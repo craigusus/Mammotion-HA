@@ -369,8 +369,15 @@ class MammotionBaseUpdateCoordinator[DataT](DataUpdateCoordinator[DataT]):  # ty
                 config_entry, data={**config_entry.data, **translated}
             )
 
+    _NO_STREAM_COMMANDS = frozenset({
+        "get_car_light", "get_maintenance", "get_device_network_info",
+        "send_todev_ble_sync", "read_plan", "get_car_audio_cfg",
+    })
+
     async def async_send_command(self, command: str, **kwargs: Any) -> bool | None:
         """Send command via MammotionClient command queue."""
+        if command not in self._NO_STREAM_COMMANDS:
+            await self.async_start_report_stream()
         device = self.manager.get_device_by_name(self.device_name)
         if device is None or not self.is_online():
             handle = self.manager.mower(self.device_name)
@@ -765,7 +772,6 @@ class MammotionBaseUpdateCoordinator[DataT](DataUpdateCoordinator[DataT]):  # ty
         self, command_str: str, response: str | None = None, **kwargs: Any
     ) -> None:
         """Send command and update."""
-        await self.async_start_report_stream()
         if response is not None:
             await self.async_send_and_wait(command_str, response, **kwargs)
         else:
