@@ -55,10 +55,11 @@ from pymammotion.http.model.camera_stream import (
 )
 from pymammotion.http.model.http import ErrorInfo, Response
 from pymammotion.mammotion.commands.mammotion_command import MammotionCommand
-from pymammotion.proto import SystemUpdateBufMsg
-from pymammotion.state.device_state import DeviceSnapshot
+from pymammotion.proto import MulSex, SystemUpdateBufMsg
+from pymammotion.state.device_state import DeviceShutdownEvent, DeviceSnapshot
 from pymammotion.transport.base import (
     AuthError,
+    BLEUnavailableError,
     CommandTimeoutError,
     ConcurrentRequestError,
     LoginFailedError,
@@ -92,7 +93,7 @@ if TYPE_CHECKING:
 
 MAINTENANCE_INTERVAL = timedelta(minutes=60)
 DEFAULT_INTERVAL = timedelta(minutes=30)
-REPORT_INTERVAL = timedelta(minutes=30)
+REPORT_INTERVAL = timedelta(minutes=5)
 DEVICE_VERSION_INTERVAL = timedelta(weeks=1)
 MAP_INTERVAL = timedelta(minutes=60)
 RTK_INTERVAL = timedelta(hours=5)
@@ -232,6 +233,12 @@ class MammotionBaseUpdateCoordinator[DataT](DataUpdateCoordinator[DataT]):  # ty
         """Return stream data."""
         return self._stream_data
 
+    async def join_webrtc_channel(self) -> None:
+        """Start stream command."""
+
+    async def leave_webrtc_channel(self) -> None:
+        """End stream command."""
+
     async def set_scheduled_updates(self, enabled: bool) -> None:
         """Enable or disable scheduled polling updates for this device."""
         device = self.manager.get_device_by_name(self.device_name)
@@ -278,7 +285,7 @@ class MammotionBaseUpdateCoordinator[DataT](DataUpdateCoordinator[DataT]):  # ty
         if not self.has_cloud_account:
             return
 
-        if isinstance(exc, (LoginFailedError, ReLoginRequiredError)):
+        if isinstance(exc, LoginFailedError):
             raise ConfigEntryAuthFailed(
                 f"Login failed for Mammotion account: {exc}"
             ) from exc
@@ -505,6 +512,22 @@ class MammotionBaseUpdateCoordinator[DataT](DataUpdateCoordinator[DataT]):  # ty
             if self.update_failures < 5:
                 await self.async_sync_schedule()
 
+    async def async_fetch_audio_config(self) -> None:
+        """Request current audio config (volume, language, gender) from device."""
+        await self.async_send_command("get_car_audio_cfg")
+
+    async def async_set_voice_volume(self, volume: float) -> None:
+        """Set robot voice volume (0–100)."""
+        await self.async_send_command("set_car_volume", volume=int(volume))
+
+    async def async_set_voice_on_off(self, on: bool) -> None:
+        """Turn robot voice on (restores 50%) or off (sets volume to 0)."""
+        await self.async_send_command("set_car_volume", volume=50 if on else 0)
+
+    async def async_set_voice_gender(self, sex: str) -> None:
+        """Set robot voice gender (MAN or WOMAN)."""
+        await self.async_send_command("set_car_volume_sex", sex=MulSex[sex])
+
     async def async_start_stop_blades(
         self, start_stop: bool, blade_height: int = 60
     ) -> None:
@@ -714,9 +737,11 @@ class MammotionBaseUpdateCoordinator[DataT](DataUpdateCoordinator[DataT]):  # ty
         )
 
     async def async_get_area_list(self) -> None:
-        """Mowing area List."""
-        await self.async_send_command(
-            "get_area_name_list", device_id=self.device.iot_id
+        """Fetch area names and wait for the toapp_all_hash_name response."""
+        await self.async_send_and_wait(
+            "get_area_name_list",
+            "toapp_all_hash_name",
+            device_id=self.device.iot_id,
         )
 
     async def async_relocate_charging_station(self) -> None:
@@ -912,7 +937,7 @@ class MammotionBaseUpdateCoordinator[DataT](DataUpdateCoordinator[DataT]):  # ty
                 handle.restore_device(empty)
 
     async def async_save_data(self, data: MowingDevice) -> None:
-        """Get map data from the device."""
+        """Store data."""
         store: Store = Store(
             self.hass, version=1, minor_version=2, key=self.device_name
         )
@@ -988,8 +1013,26 @@ class MammotionBaseUpdateCoordinator[DataT](DataUpdateCoordinator[DataT]):  # ty
                     handle.subscribe_device_event(
                         self._guarded(self._async_update_event_message)
                     ),
+                    handle.subscribe_shutdown(self._guarded(self._on_device_shutdown)),
                 ]
             )
+
+    async def _on_device_shutdown(self, event: DeviceShutdownEvent) -> None:
+        """React to a device-initiated power-off notification.
+
+        The handle has already set mqtt_reported_offline=True (blocking further
+        sends) and emitted a state-changed snapshot.  We force an immediate HA
+        state write here so the entity availability reflects the shutdown before
+        the debounce window or the next MQTT heartbeat timeout.
+        """
+        _LOGGER.debug(
+            "%s: device power-off notification (power_type=%d)",
+            self.device_name,
+            event.power_type,
+        )
+        self.async_set_updated_data(
+            self.manager.mower(self.device_name).state_machine.current.raw
+        )
 
     def _guarded(self, method: Any) -> Any:
         """Wrap a callback so it silently skips when HA is shutting down.
@@ -1205,6 +1248,18 @@ class MammotionReportUpdateCoordinator(MammotionBaseUpdateCoordinator[MowingDevi
                     BluetoothScanningMode.ACTIVE,
                 )
             )
+
+        if handle := self.manager.mower(self.device_name):
+            if ble := handle.get_transport(TransportType.BLE):
+                if ble.is_usable and not ble.is_connected:
+                    try:
+                        await ble.connect()
+                    except BLEUnavailableError as exc:
+                        LOGGER.debug(
+                            "BLE unavailable for %s during update — continuing via cloud: %s",
+                            self.device_name,
+                            exc,
+                        )
 
         return device
 
@@ -1559,8 +1614,6 @@ class MammotionMapUpdateCoordinator(MammotionBaseUpdateCoordinator[MowerInfo]):
             return
         try:
             await self.async_rtk_dock_location()
-            if not DeviceType.is_luba1(self.device_name):
-                await self.async_get_area_list()
         except DeviceOfflineException as ex:
             if ex.iot_id == self.device.iot_id:
                 self.device_offline(device)
