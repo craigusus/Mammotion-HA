@@ -647,7 +647,7 @@ class MammotionBaseUpdateCoordinator[DataT](DataUpdateCoordinator[DataT]):  # ty
 
     async def async_leave_dock(self) -> None:
         """Leave dock."""
-        await self.send_command_and_update("leave_dock", "todev_taskctrl_ack")
+        await self.send_command_and_update("leave_dock")
 
     async def async_cancel_task(self) -> None:
         """Cancel task."""

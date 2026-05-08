@@ -324,7 +324,7 @@ class MammotionLawnMowerEntity(MammotionBaseEntity, LawnMowerEntity):  # type: i
         """Start docking."""
         trans_key = "pause_failed"
 
-        await self.coordinator.async_start_report_stream()
+        await self.coordinator.async_get_reports(count=5)
         charge_state = self.rpt_dev_status.charge_state
         mode = self.rpt_dev_status.sys_status
         if mode is None:
