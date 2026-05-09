@@ -268,6 +268,13 @@ class MammotionSwitchEntity(MammotionBaseEntity, SwitchEntity, RestoreEntity):
             self._attr_is_on = self.entity_description.is_on_func(self.coordinator)
             self.async_write_ha_state()
 
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        """Update state from real device data on every coordinator push."""
+        if self.entity_description.is_on_func is not None:
+            self._attr_is_on = self.entity_description.is_on_func(self.coordinator)
+        super()._handle_coordinator_update()
+
     async def async_added_to_hass(self) -> None:
         """Run when entity about to be added."""
         await super().async_added_to_hass()
