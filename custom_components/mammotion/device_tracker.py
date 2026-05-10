@@ -32,7 +32,7 @@ async def async_setup_entry(
 class MammotionTracker(MammotionBaseEntity, TrackerEntity, RestoreEntity):  # type: ignore[misc]
     """Mammotion device tracker."""
 
-    _attr_force_update = False
+    _attr_force_update = True
     _attr_translation_key = "device_tracker"
     _attr_source_type = SourceType.GPS
 
