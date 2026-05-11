@@ -1569,7 +1569,7 @@ class MammotionMaintenanceUpdateCoordinator(MammotionBaseUpdateCoordinator[Maint
                 "read_job_do_not_disturb", "todev_unable_time_set"
             )
             await self.async_send_command("get_device_network_info")
-        except (DeviceOfflineException, GatewayTimeoutException):
+        except (DeviceOfflineException, GatewayTimeoutException, NoTransportAvailableError, CommandTimeoutError, ConcurrentRequestError, BLEUnavailableError, HomeAssistantError):
             pass
 
 
@@ -1713,7 +1713,7 @@ class MammotionDeviceVersionUpdateCoordinator(
                                 device.update_check = check_version
 
             self.async_set_updated_data(self.data)
-        except DeviceOfflineException:
+        except (DeviceOfflineException, NoTransportAvailableError, CommandTimeoutError, ConcurrentRequestError, BLEUnavailableError, HomeAssistantError):
             pass
 
 
@@ -1796,7 +1796,7 @@ class MammotionMapUpdateCoordinator(MammotionBaseUpdateCoordinator[MowerInfo]):
                 self.device_offline(device)
         except GatewayTimeoutException:
             pass
-        except NoTransportAvailableError:
+        except (NoTransportAvailableError, HomeAssistantError):
             LOGGER.debug(
                 "No transport connected yet for %s, map data will be fetched on next update",
                 self.device_name,
@@ -1967,7 +1967,7 @@ class MammotionDeviceErrorUpdateCoordinator(
                     device.errors.error_codes = await http.get_all_error_codes()
 
             self.async_set_updated_data(self.data)
-        except DeviceOfflineException:
+        except (DeviceOfflineException, NoTransportAvailableError, CommandTimeoutError, ConcurrentRequestError, BLEUnavailableError, HomeAssistantError):
             pass
 
 
@@ -2093,13 +2093,16 @@ class MammotionRTKCoordinator(MammotionBaseUpdateCoordinator[RTKBaseStationDevic
             ) and DeviceType.is_aliyun_product_key(self.data.product_key):
                 await self.manager.fetch_rtk_properties(self.device_name)
                 await gateway.get_device_status(self.device.iot_id)
-        await self.async_send_command("send_todev_ble_sync", sync_type=3)
-        await self.async_request_report_snapshot()
-        await self.async_send_and_wait("basestation_info", "to_app")
-        await self.async_send_and_wait(
-            "get_device_network_info", "toapp_networkinfo_rsp"
-        )
-        self.data.online = True
+        try:
+            await self.async_send_command("send_todev_ble_sync", sync_type=3)
+            await self.async_request_report_snapshot()
+            await self.async_send_and_wait("basestation_info", "to_app")
+            await self.async_send_and_wait(
+                "get_device_network_info", "toapp_networkinfo_rsp"
+            )
+            self.data.online = True
+        except (DeviceOfflineException, NoTransportAvailableError, CommandTimeoutError, ConcurrentRequestError, BLEUnavailableError, HomeAssistantError):
+            pass
 
     async def update_firmware(self, version: str) -> None:
         """Update firmware."""
