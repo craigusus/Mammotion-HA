@@ -1475,6 +1475,7 @@ class MammotionReportUpdateCoordinator(MammotionBaseUpdateCoordinator[MowingDevi
             CommandTimeoutError,
             ConcurrentRequestError,
             BLEUnavailableError,
+            HomeAssistantError,
         ):
             pass
 
