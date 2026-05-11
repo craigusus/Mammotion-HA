@@ -275,13 +275,6 @@ class MammotionSwitchEntity(MammotionBaseEntity, SwitchEntity, RestoreEntity):
             self.async_write_ha_state()
             raise
 
-    @callback
-    def _handle_coordinator_update(self) -> None:
-        """Handle updated data from the coordinator."""
-        if callable(self.entity_description.is_on_func):
-            self._attr_is_on = self.entity_description.is_on_func(self.coordinator)
-        super()._handle_coordinator_update()
-
     async def async_update(self) -> None:
         """Update the entity state."""
         if self.entity_description.is_on_func is not None:
@@ -298,6 +291,9 @@ class MammotionSwitchEntity(MammotionBaseEntity, SwitchEntity, RestoreEntity):
     async def async_added_to_hass(self) -> None:
         """Run when entity about to be added."""
         await super().async_added_to_hass()
+        if self.entity_description.is_on_func is not None:
+            # Live device data is available — don't let stale persisted state override it.
+            return
         if not (last_state := await self.async_get_last_state()):
             return
         self._attr_is_on = last_state.state == STATE_ON
