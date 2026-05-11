@@ -312,6 +312,12 @@
       "schedule_updates": {
         "name": "Turn Updates On/Off"
       },
+      "bluetooth_enabled": {
+        "name": "Bluetooth"
+      },
+      "cloud_enabled": {
+        "name": "Cloud"
+      },
       "manual_light": {
         "name": "Manual Light on/off"
       },
@@ -389,6 +395,14 @@
         "state": {
           "multipoint": "Multipoint turn",
           "zero_turn": "Zero turn"
+        }
+      },
+      "wildlife_safety": {
+        "name": "Wildlife Safety",
+        "state": {
+          "off": "Off",
+          "stop_mowing": "Stop Mowing",
+          "low_speed_mowing": "Low-Speed Mowing"
         }
       },
       "cutter_mode": {

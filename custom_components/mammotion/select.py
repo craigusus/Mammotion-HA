@@ -1,9 +1,11 @@
+"""Select entities for the Mammotion integration."""
+
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 
 from homeassistant.components.select import SelectEntity, SelectEntityDescription
 from homeassistant.const import EntityCategory
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.restore_state import RestoreEntity
 from pymammotion.data.model.mowing_modes import (
@@ -16,6 +18,7 @@ from pymammotion.data.model.mowing_modes import (
     PathAngleSetting,
     TraversalMode,
     TurningMode,
+    WildlifeSafety,
 )
 from pymammotion.utility.device_type import DeviceType
 
@@ -68,6 +71,18 @@ ASYNC_SELECT_ENTITIES: tuple[MammotionAsyncConfigSelectEntityDescription, ...] =
         get_fn=lambda coordinator: coordinator.data.mower_state.turning_mode,
         set_fn=lambda coordinator, value: coordinator.async_set_turning_mode(
             TurningMode[value].value
+        ),
+    ),
+    MammotionAsyncConfigSelectEntityDescription(
+        key="wildlife_safety",
+        options=[mode.name for mode in WildlifeSafety],
+        get_fn=lambda coordinator: (
+            WildlifeSafety.off.value
+            if coordinator.data.mower_state.animal_protection.status == 0
+            else coordinator.data.mower_state.animal_protection.mode
+        ),
+        set_fn=lambda coordinator, value: coordinator.async_set_wildlife_safety(
+            WildlifeSafety[value].value
         ),
     ),
 )
@@ -234,6 +249,7 @@ class MammotionConfigSelectEntity(MammotionBaseEntity, SelectEntity, RestoreEnti
         coordinator: MammotionReportUpdateCoordinator,
         entity_description: MammotionConfigSelectEntityDescription,
     ) -> None:
+        """Initialize the config select entity."""
         super().__init__(coordinator, entity_description.key)
         self.coordinator = coordinator
         self.entity_description = entity_description
@@ -243,6 +259,7 @@ class MammotionConfigSelectEntity(MammotionBaseEntity, SelectEntity, RestoreEnti
         self.entity_description.set_fn(self.coordinator, self._attr_current_option)
 
     async def async_select_option(self, option: str) -> None:
+        """Select an option."""
         self._attr_current_option = option
         self.entity_description.set_fn(self.coordinator, option)
         if self.entity_description.async_set_fn is not None:
@@ -276,6 +293,7 @@ class MammotionAsyncConfigSelectEntity(
         coordinator: MammotionReportUpdateCoordinator,
         entity_description: MammotionAsyncConfigSelectEntityDescription,
     ) -> None:
+        """Initialize the async config select entity."""
         super().__init__(coordinator, entity_description.key)
         self.coordinator = coordinator
         self.entity_description = entity_description
@@ -288,7 +306,17 @@ class MammotionAsyncConfigSelectEntity(
         else:
             self._attr_current_option = self._attr_options[0]
 
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        """Handle updated data from the coordinator."""
+        if callable(self.entity_description.get_fn):
+            self._attr_current_option = self._attr_options[
+                self.entity_description.get_fn(self.coordinator)
+            ]
+        super()._handle_coordinator_update()
+
     async def async_select_option(self, option: str) -> None:
+        """Select an option."""
         self._attr_current_option = option
         await self.entity_description.set_fn(self.coordinator, option)
         self.async_write_ha_state()
@@ -301,6 +329,7 @@ class MammotionAsyncConfigSelectEntity(
                 self._attr_current_option = state.state
 
     async def async_update(self) -> None:
+        """Update entity state from coordinator."""
         if callable(self.entity_description.get_fn):
             self._attr_current_option = self._attr_options[
                 self.entity_description.get_fn(self.coordinator)

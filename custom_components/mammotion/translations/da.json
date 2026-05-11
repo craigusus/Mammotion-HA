@@ -309,11 +309,17 @@
       "schedule_updates": {
         "name": "Slå opdateringer til/fra"
       },
+      "bluetooth_enabled": {
+        "name": "Bluetooth"
+      },
+      "cloud_enabled": {
+        "name": "Cloud"
+      },
       "manual_light": {
         "name": "Manuelt lys Tænd/sluk"
       },
       "night_light": {
-        "name": "Nattelys til/fra"
+        "name": "Automatisk belysning til/fra"
       },
       "voice_on_off": {
         "name": "Stemme til/fra"
@@ -401,6 +407,14 @@
         "state": {
           "MAN": "Mand",
           "WOMAN": "Kvinde"
+        }
+      },
+      "wildlife_safety": {
+        "name": "Dyresikkerhed",
+        "state": {
+          "off": "Slukket",
+          "stop_mowing": "Stop klipning",
+          "low_speed_mowing": "Klipning med lav hastighed"
         }
       }
     },
