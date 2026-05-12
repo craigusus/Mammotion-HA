@@ -43,6 +43,8 @@ EXPIRED_CREDENTIAL_EXCEPTIONS = (
 
 CONF_HAS_CLOUD_ACCOUNT: Final = "has_cloud_account"
 CONF_STAY_CONNECTED_BLUETOOTH: Final = "stay_connected_bluetooth"
+CONF_BLUETOOTH_ENABLED: Final = "bluetooth_enabled"
+CONF_CLOUD_ENABLED: Final = "cloud_enabled"
 CONF_PREFER_BLE: Final = "prefer_ble_over_wifi"
 CONF_MOVEMENT_USE_WIFI: Final = "movement_use_wifi"
 CONF_ACCOUNTNAME: Final = "account_name"
