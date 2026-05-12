@@ -46,6 +46,7 @@ class MammotionAsyncSwitchEntityDescription(MammotionSwitchEntityDescription):
     poll_func: Callable[[MammotionBaseUpdateCoordinator], Awaitable[None]] | None = None
     is_on_func: Callable[[MammotionBaseUpdateCoordinator], bool] | None = None
     set_fn: Callable[[MammotionBaseUpdateCoordinator, bool], Awaitable[None]]
+    restore_state: bool = False
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -148,12 +149,14 @@ CONNECTIVITY_SWITCH_ENTITIES: tuple[MammotionAsyncSwitchEntityDescription, ...] 
         set_fn=lambda coordinator, value: coordinator.async_set_bluetooth_enabled(
             value
         ),
+        restore_state=True,
         entity_category=EntityCategory.CONFIG,
     ),
     MammotionAsyncSwitchEntityDescription(
         key="cloud_enabled",
         is_on_func=lambda coordinator: coordinator.cloud_enabled,
         set_fn=lambda coordinator, value: coordinator.async_set_cloud_enabled(value),
+        restore_state=True,
         entity_category=EntityCategory.CONFIG,
     ),
 )
@@ -291,12 +294,16 @@ class MammotionSwitchEntity(MammotionBaseEntity, SwitchEntity, RestoreEntity):
     async def async_added_to_hass(self) -> None:
         """Run when entity about to be added."""
         await super().async_added_to_hass()
-        if self.entity_description.is_on_func is not None:
-            # Live device data is available — don't let stale persisted state override it.
+        if (
+            self.entity_description.is_on_func is not None
+            and not self.entity_description.restore_state
+        ):
+            # Live device data is the source of truth — don't restore stale state.
             return
         if not (last_state := await self.async_get_last_state()):
             return
         self._attr_is_on = last_state.state == STATE_ON
+        await self.entity_description.set_fn(self.coordinator, self._attr_is_on)
 
 
 class MammotionUpdateSwitchEntity(MammotionBaseEntity, SwitchEntity, RestoreEntity):

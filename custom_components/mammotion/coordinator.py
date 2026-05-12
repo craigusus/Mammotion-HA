@@ -78,8 +78,6 @@ from .agora_api import SERVICE_IDS, AgoraAPIClient, AgoraResponse
 from .config import MammotionConfigStore
 from .const import (
     CONF_ACCOUNTNAME,
-    CONF_BLUETOOTH_ENABLED,
-    CONF_CLOUD_ENABLED,
     CONF_CONNECT_DATA,
     CONF_HAS_CLOUD_ACCOUNT,
     CONF_MAMMOTION_DATA,
@@ -145,12 +143,8 @@ class MammotionBaseUpdateCoordinator[DataT](DataUpdateCoordinator[DataT]):  # ty
         self._subscriptions: list[Subscription] = []
         self.map_offset_lat: float = 0.0
         self.map_offset_lon: float = 0.0
-        self._bluetooth_enabled: bool = bool(
-            config_entry.options.get(CONF_BLUETOOTH_ENABLED, True)
-        )
-        self._cloud_enabled: bool = bool(
-            config_entry.options.get(CONF_CLOUD_ENABLED, True)
-        )
+        self._bluetooth_enabled: bool = True
+        self._cloud_enabled: bool = True
 
         mower_device = self.manager.get_device_by_name(self.device_name)
 
@@ -290,10 +284,6 @@ class MammotionBaseUpdateCoordinator[DataT](DataUpdateCoordinator[DataT]):  # ty
     async def async_set_bluetooth_enabled(self, enabled: bool) -> None:
         """Enable or disable Bluetooth transport."""
         self._bluetooth_enabled = enabled
-        self.hass.config_entries.async_update_entry(
-            self.config_entry,
-            options={**self.config_entry.options, CONF_BLUETOOTH_ENABLED: enabled},
-        )
         handle = self.manager.mower(self.device_name)
         if handle is None:
             return
@@ -306,10 +296,6 @@ class MammotionBaseUpdateCoordinator[DataT](DataUpdateCoordinator[DataT]):  # ty
     async def async_set_cloud_enabled(self, enabled: bool) -> None:
         """Enable or disable Cloud transport."""
         self._cloud_enabled = enabled
-        self.hass.config_entries.async_update_entry(
-            self.config_entry,
-            options={**self.config_entry.options, CONF_CLOUD_ENABLED: enabled},
-        )
         handle = self.manager.mower(self.device_name)
         if handle is None:
             return
