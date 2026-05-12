@@ -146,10 +146,10 @@ class MammotionBaseUpdateCoordinator[DataT](DataUpdateCoordinator[DataT]):  # ty
         self.map_offset_lat: float = 0.0
         self.map_offset_lon: float = 0.0
         self._bluetooth_enabled: bool = bool(
-            config_entry.data.get(CONF_BLUETOOTH_ENABLED, True)
+            config_entry.options.get(CONF_BLUETOOTH_ENABLED, True)
         )
         self._cloud_enabled: bool = bool(
-            config_entry.data.get(CONF_CLOUD_ENABLED, True)
+            config_entry.options.get(CONF_CLOUD_ENABLED, True)
         )
 
         mower_device = self.manager.get_device_by_name(self.device_name)
@@ -292,7 +292,7 @@ class MammotionBaseUpdateCoordinator[DataT](DataUpdateCoordinator[DataT]):  # ty
         self._bluetooth_enabled = enabled
         self.hass.config_entries.async_update_entry(
             self.config_entry,
-            data={**self.config_entry.data, CONF_BLUETOOTH_ENABLED: enabled},
+            options={**self.config_entry.options, CONF_BLUETOOTH_ENABLED: enabled},
         )
         handle = self.manager.mower(self.device_name)
         if handle is None:
@@ -308,7 +308,7 @@ class MammotionBaseUpdateCoordinator[DataT](DataUpdateCoordinator[DataT]):  # ty
         self._cloud_enabled = enabled
         self.hass.config_entries.async_update_entry(
             self.config_entry,
-            data={**self.config_entry.data, CONF_CLOUD_ENABLED: enabled},
+            options={**self.config_entry.options, CONF_CLOUD_ENABLED: enabled},
         )
         handle = self.manager.mower(self.device_name)
         if handle is None:
