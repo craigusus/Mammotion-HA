@@ -149,14 +149,12 @@ CONNECTIVITY_SWITCH_ENTITIES: tuple[MammotionAsyncSwitchEntityDescription, ...] 
         set_fn=lambda coordinator, value: coordinator.async_set_bluetooth_enabled(
             value
         ),
-        restore_state=True,
         entity_category=EntityCategory.CONFIG,
     ),
     MammotionAsyncSwitchEntityDescription(
         key="cloud_enabled",
         is_on_func=lambda coordinator: coordinator.cloud_enabled,
         set_fn=lambda coordinator, value: coordinator.async_set_cloud_enabled(value),
-        restore_state=True,
         entity_category=EntityCategory.CONFIG,
     ),
 )
@@ -294,11 +292,8 @@ class MammotionSwitchEntity(MammotionBaseEntity, SwitchEntity, RestoreEntity):
     async def async_added_to_hass(self) -> None:
         """Run when entity about to be added."""
         await super().async_added_to_hass()
-        if (
-            self.entity_description.is_on_func is not None
-            and not self.entity_description.restore_state
-        ):
-            # Live device data is the source of truth — don't restore stale state.
+        if self.entity_description.is_on_func is not None:
+            # Live coordinator data is the source of truth — don't restore stale state.
             return
         if not (last_state := await self.async_get_last_state()):
             return

@@ -149,8 +149,8 @@ class MammotionBaseUpdateCoordinator[DataT](DataUpdateCoordinator[DataT]):  # ty
         self._subscriptions: list[Subscription] = []
         self.map_offset_lat: float = 0.0
         self.map_offset_lon: float = 0.0
-        self._bluetooth_enabled: bool = True
-        self._cloud_enabled: bool = True
+        self._bluetooth_enabled: bool = config_entry.options.get("bluetooth_enabled", True)
+        self._cloud_enabled: bool = config_entry.options.get("cloud_enabled", True)
 
         mower_device = self.manager.get_device_by_name(self.device_name)
 
@@ -311,6 +311,10 @@ class MammotionBaseUpdateCoordinator[DataT](DataUpdateCoordinator[DataT]):  # ty
     async def async_set_bluetooth_enabled(self, enabled: bool) -> None:
         """Enable or disable Bluetooth transport."""
         self._bluetooth_enabled = enabled
+        self.hass.config_entries.async_update_entry(
+            self.config_entry,
+            options={**self.config_entry.options, "bluetooth_enabled": enabled},
+        )
         handle = self.manager.mower(self.device_name)
         if handle is None:
             return
@@ -323,6 +327,10 @@ class MammotionBaseUpdateCoordinator[DataT](DataUpdateCoordinator[DataT]):  # ty
     async def async_set_cloud_enabled(self, enabled: bool) -> None:
         """Enable or disable Cloud transport."""
         self._cloud_enabled = enabled
+        self.hass.config_entries.async_update_entry(
+            self.config_entry,
+            options={**self.config_entry.options, "cloud_enabled": enabled},
+        )
         handle = self.manager.mower(self.device_name)
         if handle is None:
             return
