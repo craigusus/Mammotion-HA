@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import asyncio
 import datetime
 import json
+import time
 from abc import abstractmethod
 from collections.abc import Callable, Mapping
 from datetime import timedelta
@@ -118,6 +120,8 @@ class MammotionBaseUpdateCoordinator[DataT](DataUpdateCoordinator[DataT]):  # ty
             update_interval=update_interval,
             config_entry=config_entry,
         )
+        self._ice_servers = None
+        self._agora_response = None
         assert config_entry.unique_id
         self.account = config_entry.data.get(CONF_ACCOUNTNAME, "")
         self.password = config_entry.data.get(CONF_PASSWORD, "")
@@ -132,6 +136,8 @@ class MammotionBaseUpdateCoordinator[DataT](DataUpdateCoordinator[DataT]):  # ty
         self._stream_data: Response[StreamSubscriptionResponse] | None = (
             None  # Stream data [Agora]
         )
+        self._stream_data_fetched_at: float = 0.0  # monotonic timestamp of last fetch
+        self._STREAM_TOKEN_TTL: float = 300.0  # seconds before we re-fetch
         _mammotion_data = config_entry.data.get(CONF_MAMMOTION_DATA) or {}
         try:
             _user_account = int(
@@ -163,18 +169,30 @@ class MammotionBaseUpdateCoordinator[DataT](DataUpdateCoordinator[DataT]):  # ty
         """Get coordinator data."""
 
     async def async_check_stream_expiry(
-        self,
+        self, force: bool = False
     ) -> tuple[StreamSubscriptionResponse | None, AgoraResponse | None]:
-        """Check if stream token is expired and refresh if needed."""
+        """Return cached Agora stream data, refreshing only when the token is absent or stale."""
+        now = time.monotonic()
+        token_age = now - self._stream_data_fetched_at
+        cached_data = self._stream_data
+
+        if not force and (
+            cached_data is not None
+            and cached_data.data is not None
+            and token_age < self._STREAM_TOKEN_TTL
+            and self._agora_response is not None
+        ):
+            LOGGER.debug("Reusing cached stream token (age=%.0fs)", token_age)
+            return cached_data.data, self._agora_response
+
         stream_data = None
-        agora_response = None
 
         try:
-            # Refresh stream data
             stream_data = await self.manager.get_stream_subscription(
                 self.device_name, self.device.iot_id
             )
             self.set_stream_data(stream_data)
+            self._stream_data_fetched_at = time.monotonic()
 
             if stream_data is not None and stream_data.data is not None:
                 LOGGER.debug("Received stream data: %s", stream_data)
@@ -222,7 +240,10 @@ class MammotionBaseUpdateCoordinator[DataT](DataUpdateCoordinator[DataT]):  # ty
             LOGGER.debug("Stream token refreshed successfully")
         except Exception as ex:
             LOGGER.error("Failed to refresh stream token: %s", ex)
-        return stream_data, agora_response
+        return (
+            stream_data.data if stream_data is not None else None,
+            self._agora_response,
+        )
 
     def set_stream_data(
         self, stream_data: Response[StreamSubscriptionResponse]
@@ -251,6 +272,12 @@ class MammotionBaseUpdateCoordinator[DataT](DataUpdateCoordinator[DataT]):  # ty
             if not device.online:
                 device.online = True
         await self.manager.set_scheduled_updates(self.device_name, enabled=enabled)
+        handle = self.manager.mower(self.device_name)
+        if handle is not None:
+            if enabled:
+                await handle.restart_keep_alive()
+            else:
+                await handle.stop_polling()
 
     def is_online(self) -> bool:
         """Return True if the device currently has an active transport connection."""
@@ -299,7 +326,11 @@ class MammotionBaseUpdateCoordinator[DataT](DataUpdateCoordinator[DataT]):  # ty
         handle = self.manager.mower(self.device_name)
         if handle is None:
             return
-        if not enabled:
+        if enabled:
+            for t_type in (TransportType.CLOUD_ALIYUN, TransportType.CLOUD_MAMMOTION):
+                await handle.connect_transport(t_type)
+            await handle.restart_keep_alive()
+        else:
             for t_type in (TransportType.CLOUD_ALIYUN, TransportType.CLOUD_MAMMOTION):
                 await handle.disconnect_transport(t_type)
 
@@ -388,6 +419,18 @@ class MammotionBaseUpdateCoordinator[DataT](DataUpdateCoordinator[DataT]):  # ty
             ConcurrentRequestError,
         ):
             pass
+        except asyncio.CancelledError:
+            # bleak_retry_connector raises CancelledError when no BLE slot is
+            # available (it cancels its own internal sleep).  Re-raise only when
+            # the enclosing task is genuinely being cancelled; otherwise treat it
+            # as a transient BLE failure and let setup continue.
+            task = asyncio.current_task()
+            if task is not None and task.cancelling() > 0:
+                raise
+            LOGGER.debug(
+                "BLE connection cancelled (no available slot) for %s — skipping",
+                self.device_name,
+            )
 
     @staticmethod
     def device_offline(device: MowingDevice | RTKBaseStationDevice) -> None:
@@ -432,7 +475,10 @@ class MammotionBaseUpdateCoordinator[DataT](DataUpdateCoordinator[DataT]):  # ty
 
         try:
             await self.manager.send_command_with_args(
-                self.device_name, command, prefer_ble=self._bluetooth_enabled, **kwargs
+                self.device_name,
+                command,
+                prefer_ble=kwargs.pop("prefer_ble", self._bluetooth_enabled),
+                **kwargs,
             )
             self.update_failures = 0
             return True
@@ -460,6 +506,15 @@ class MammotionBaseUpdateCoordinator[DataT](DataUpdateCoordinator[DataT]):  # ty
             raise HomeAssistantError(
                 translation_domain=DOMAIN, translation_key="command_failed"
             ) from exc
+            return False
+        except asyncio.CancelledError:
+            task = asyncio.current_task()
+            if task is not None and task.cancelling() > 0:
+                raise
+            LOGGER.debug(
+                "BLE connection cancelled (no available slot) for %s — skipping",
+                self.device_name,
+            )
             return False
         return False
 
@@ -815,6 +870,10 @@ class MammotionBaseUpdateCoordinator[DataT](DataUpdateCoordinator[DataT]):  # ty
         ``__init__.py``; this method only covers the case where no transport
         was wired (e.g. mower out of range at integration startup).
         """
+
+        if not self._bluetooth_enabled:
+            return
+
         device = self.manager.get_device_by_name(self.device_name)
         if device is None:
             return
@@ -1329,7 +1388,7 @@ class MammotionReportUpdateCoordinator(MammotionBaseUpdateCoordinator[MowingDevi
         self.poll_debouncer.async_schedule_call()
 
     def _add_ble_device(self) -> None:
-        if not self.service_info:
+        if not self.service_info or not self._bluetooth_enabled:
             return
         handle = self.manager.mower(self.device_name)
         if handle is None:
@@ -1339,7 +1398,7 @@ class MammotionReportUpdateCoordinator(MammotionBaseUpdateCoordinator[MowingDevi
             self.hass.create_task(self._async_ensure_ble_client())
 
         if ble := handle.get_transport(TransportType.BLE):
-            if not ble.is_connected and self.data.enabled and self._bluetooth_enabled:
+            if not ble.is_connected and self.data.enabled:
                 cast(BLETransport, ble).set_ble_device(self.service_info.device)
                 self.hass.create_task(ble.connect())
 
@@ -1455,9 +1514,9 @@ class MammotionReportUpdateCoordinator(MammotionBaseUpdateCoordinator[MowingDevi
 
     async def _async_setup(self) -> None:
         await super()._async_setup()
-        await self.async_request_report_snapshot()
 
         try:
+            await self.async_send_command("send_todev_ble_sync", sync_type=3)
             await self.async_read_rain_detection()
             await self.async_read_sidelight()
             await self.async_read_turning_mode()
@@ -1469,6 +1528,7 @@ class MammotionReportUpdateCoordinator(MammotionBaseUpdateCoordinator[MowingDevi
             if DeviceType.is_luba_pro(self.device_name):
                 await self.async_fetch_audio_config()
                 await self.async_read_wildlife_safety()
+            await self.async_request_report_snapshot()
         except (
             DeviceOfflineException,
             NoTransportAvailableError,
@@ -2083,6 +2143,9 @@ class MammotionRTKCoordinator(MammotionBaseUpdateCoordinator[RTKBaseStationDevic
             updated.iot_id = self.device.iot_id
             updated.name = self.device.device_name
             snapshot, _ = handle.state_machine.apply(updated, handle.availability)
+
+        if self.data.lat != 0:
+            return
 
         if self.has_cloud_account:
             # Fetch lora version — only available via HTTP, not MQTT/protobuf.
