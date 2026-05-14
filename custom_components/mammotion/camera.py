@@ -147,6 +147,11 @@ class MammotionWebRTCCamera(MammotionCameraBaseEntity):
         self.ice_servers = getattr(coordinator, "_ice_servers", [])
         async_register_ice_servers(hass, self.get_ice_servers)
 
+    @property
+    def available(self) -> bool:
+        """Camera requires cloud — unavailable when cloud transport is disabled."""
+        return self.coordinator.cloud_enabled
+
     async def async_camera_image(
         self, width: int | None = None, height: int | None = None
     ) -> bytes | None:
