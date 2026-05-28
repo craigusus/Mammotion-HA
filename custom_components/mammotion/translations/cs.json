@@ -10,7 +10,12 @@
       "not_supported": "Zařízení není podporováno",
       "reconfigure_successful": "Rekonfigurace úspěšná",
       "api_limit_exceeded": "Byl překročen limit požadavků API. Zkuste to prosím znovu později.",
-      "cannot_connect": "Nelze se připojit ke cloudu Mammotion. Zkontrolujte přihlašovací údaje a síť a zkuste to znovu."
+      "account_in_use": "Váš účet Mammotion je již aktivní v jiné relaci. Odhlaste se z aplikace Mammotion a zkuste to znovu."
+    },
+    "error": {
+      "login_failed": "Přihlášení se nezdařilo. Zkontrolujte e-mail a heslo svého účtu a zkuste to znovu.",
+      "cannot_connect": "Nelze se připojit ke cloudu Mammotion. Zkontrolujte přihlašovací údaje a síť a zkuste to znovu.",
+      "no_account_no_ble": "Nebyly zadány údaje účtu a nebylo nalezeno žádné zařízení Bluetooth. Zadejte přihlašovací údaje k účtu Mammotion nebo nastavte zařízení Bluetooth."
     },
     "flow_title": "{name}",
     "step": {
@@ -174,7 +179,8 @@
           "MODE_EDIT_BOUNDARY": "Úprava hranice",
           "MODE_LOCATION_ERROR": "Chyba polohy",
           "MODE_BOUNDARY_JUMP": "Překročení hranice",
-          "MODE_CHARGING_PAUSE": "Nabíjení pozastaveno"
+          "MODE_CHARGING_PAUSE": "Nabíjení pozastaveno",
+          "MODE_POWER_OFF": "Vypínání"
         }
       },
       "work_area": {
@@ -220,7 +226,8 @@
           "RTK_OVER_DATALINK": "Antena přes DataLink",
           "RTK_OVER_INTERNET": "Antena přes internet",
           "INAVI_NET_RTK": "iNavi NetRTK",
-          "INAVI_RTK_BOX": "iNavi RTK Box"
+          "INAVI_RTK_BOX": "iNavi RTK Box",
+          "UNKNOWN": "Neznámé"
         }
       },
       "rtk_app_connect_type": {
@@ -239,6 +246,34 @@
           "MOWING": "Sečení",
           "COMPLETE": "Dokončeno",
           "ABORTED": "Přerušeno"
+        }
+      },
+      "spino_status": {
+        "name": "Stav",
+        "state": {
+          "UNKNOWN": "Neznámý",
+          "IDLE": "Pohotovostní režim",
+          "PREPARE": "Příprava",
+          "WAIT_WATER": "Napouštění vody",
+          "WORKING": "Pracuje",
+          "PAUSE_GO_CHARGE": "Návrat k nabíjení (pozastaveno)",
+          "END_GO_CHARGE": "Návrat k nabíjení",
+          "CHARGING": "Nabíjení",
+          "LEAVE_DOCK": "Opouští dok",
+          "RECALLING": "Návrat"
+        }
+      },
+      "spino_work_mode": {
+        "name": "Režim čištění",
+        "state": {
+          "UNKNOWN": "Neznámý",
+          "RECHARGE": "Dobíjení",
+          "AUTO": "Vše",
+          "FLOOR": "Dno",
+          "WALL": "Stěna",
+          "ECO": "Eko",
+          "LINE": "Vodní hladina",
+          "CUSTOM": "Vlastní"
         }
       }
     },
@@ -278,6 +313,9 @@
       },
       "restart_mower": {
         "name": "Restartovat sekačku"
+      },
+      "spino_refresh_status": {
+        "name": "Obnovit stav"
       }
     },
     "switch": {
@@ -325,6 +363,18 @@
       },
       "voice_on_off": {
         "name": "Hlas zapnuto/vypnuto"
+      },
+      "spino_buzzer": {
+        "name": "Bzučák"
+      },
+      "spino_turbo_clean": {
+        "name": "Turbo čištění"
+      },
+      "spino_platform_cleaning": {
+        "name": "Čištění plošiny"
+      },
+      "spino_waterline_parking": {
+        "name": "Parkování na hladině"
       }
     },
     "select": {
@@ -417,6 +467,19 @@
           "off": "Vypnuto",
           "stop_mowing": "Zastavit sekání",
           "low_speed_mowing": "Sekání nízkou rychlostí"
+        }
+      },
+      "spino_work_mode": {
+        "name": "Režim čištění",
+        "state": {
+          "UNKNOWN": "Neznámý",
+          "RECHARGE": "Dobíjení",
+          "AUTO": "Vše",
+          "FLOOR": "Dno",
+          "WALL": "Stěna",
+          "ECO": "Eko",
+          "LINE": "Vodní hladina",
+          "CUSTOM": "Vlastní"
         }
       }
     },
@@ -802,6 +865,9 @@
     },
     "api_limit_exceeded": {
       "message": "Byl překročen limit požadavků API."
+    },
+    "account_in_use": {
+      "message": "Váš účet Mammotion je již aktivní v jiné relaci. Odhlaste se z aplikace Mammotion a zkuste to znovu."
     },
     "cloud_setup_failed": {
       "message": "Nelze se připojit ke cloudu Mammotion. Zkontrolujte síť a zkuste integraci znovu načíst."

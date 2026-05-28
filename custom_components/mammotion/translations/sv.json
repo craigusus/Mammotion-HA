@@ -10,7 +10,12 @@
       "not_supported": "Enheten stöds inte",
       "reconfigure_successful": "Omkonfigurering lyckades",
       "api_limit_exceeded": "API-anropsgränsen har överskridits. Försök igen senare.",
-      "cannot_connect": "Det går inte att ansluta till Mammotion-molnet. Kontrollera dina inloggningsuppgifter och nätverket och försök igen."
+      "account_in_use": "Ditt Mammotion-konto är redan aktivt i en annan session. Logga ut från Mammotion-appen och försök igen."
+    },
+    "error": {
+      "login_failed": "Inloggningen misslyckades. Kontrollera kontots e-postadress och lösenord och försök igen.",
+      "cannot_connect": "Det går inte att ansluta till Mammotion-molnet. Kontrollera dina inloggningsuppgifter och nätverket och försök igen.",
+      "no_account_no_ble": "Inga kontouppgifter angavs och ingen Bluetooth-enhet hittades. Ange dina Mammotion-kontouppgifter eller konfigurera en Bluetooth-enhet."
     },
     "flow_title": "{name}",
     "step": {
@@ -174,7 +179,8 @@
           "MODE_EDIT_BOUNDARY": "Redigerar gräns",
           "MODE_LOCATION_ERROR": "Positionsfel",
           "MODE_BOUNDARY_JUMP": "Gräns korsad",
-          "MODE_CHARGING_PAUSE": "Laddning pausad"
+          "MODE_CHARGING_PAUSE": "Laddning pausad",
+          "MODE_POWER_OFF": "Stänger av"
         }
       },
       "work_area": {
@@ -220,7 +226,8 @@
           "RTK_OVER_DATALINK": "Antenn över DataLink",
           "RTK_OVER_INTERNET": "Antenn över internet",
           "INAVI_NET_RTK": "iNavi NetRTK",
-          "INAVI_RTK_BOX": "iNavi RTK-box"
+          "INAVI_RTK_BOX": "iNavi RTK-box",
+          "UNKNOWN": "Okänd"
         }
       },
       "rtk_app_connect_type": {
@@ -239,6 +246,34 @@
           "MOWING": "Klipper",
           "COMPLETE": "Slutfört",
           "ABORTED": "Avbrutet"
+        }
+      },
+      "spino_status": {
+        "name": "Status",
+        "state": {
+          "UNKNOWN": "Okänd",
+          "IDLE": "Standby",
+          "PREPARE": "Förbereder",
+          "WAIT_WATER": "Fyller med vatten",
+          "WORKING": "Arbetar",
+          "PAUSE_GO_CHARGE": "Återvänder för laddning (pausad)",
+          "END_GO_CHARGE": "Återvänder för laddning",
+          "CHARGING": "Laddar",
+          "LEAVE_DOCK": "Lämnar dockan",
+          "RECALLING": "Återvänder"
+        }
+      },
+      "spino_work_mode": {
+        "name": "Rengöringsläge",
+        "state": {
+          "UNKNOWN": "Okänd",
+          "RECHARGE": "Ladda om",
+          "AUTO": "Alla",
+          "FLOOR": "Botten",
+          "WALL": "Vägg",
+          "ECO": "Eco",
+          "LINE": "Vattenlinje",
+          "CUSTOM": "Anpassad"
         }
       }
     },
@@ -278,6 +313,9 @@
       },
       "restart_mower": {
         "name": "Starta om gräsklipparen"
+      },
+      "spino_refresh_status": {
+        "name": "Uppdatera status"
       }
     },
     "switch": {
@@ -325,6 +363,18 @@
       },
       "voice_on_off": {
         "name": "Röst på/av"
+      },
+      "spino_buzzer": {
+        "name": "Summer"
+      },
+      "spino_turbo_clean": {
+        "name": "Turborengöring"
+      },
+      "spino_platform_cleaning": {
+        "name": "Plattformsrengöring"
+      },
+      "spino_waterline_parking": {
+        "name": "Parkering vid vattenlinjen"
       }
     },
     "select": {
@@ -417,6 +467,19 @@
           "off": "Av",
           "stop_mowing": "Stoppa klippning",
           "low_speed_mowing": "Klippning med låg hastighet"
+        }
+      },
+      "spino_work_mode": {
+        "name": "Rengöringsläge",
+        "state": {
+          "UNKNOWN": "Okänd",
+          "RECHARGE": "Ladda om",
+          "AUTO": "Alla",
+          "FLOOR": "Botten",
+          "WALL": "Vägg",
+          "ECO": "Eco",
+          "LINE": "Vattenlinje",
+          "CUSTOM": "Anpassad"
         }
       }
     },
@@ -802,6 +865,9 @@
     },
     "api_limit_exceeded": {
       "message": "API-anropsgränsen har överskridits."
+    },
+    "account_in_use": {
+      "message": "Ditt Mammotion-konto är redan aktivt i en annan session. Logga ut från Mammotion-appen och försök igen."
     },
     "cloud_setup_failed": {
       "message": "Det går inte att ansluta till Mammotion-molnet. Kontrollera nätverket och försök att läsa in integrationen på nytt."

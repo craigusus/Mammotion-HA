@@ -10,7 +10,12 @@
       "not_supported": "Dispozitivul nu este suportat",
       "reconfigure_successful": "Reconfigurare reușită",
       "api_limit_exceeded": "Limita de solicitări API a fost depășită. Vă rugăm să încercați din nou mai târziu.",
-      "cannot_connect": "Nu se poate conecta la cloud-ul Mammotion. Verificați datele de autentificare și rețeaua, apoi încercați din nou."
+      "account_in_use": "Contul dvs. Mammotion este deja activ într-o altă sesiune. Deconectați-vă din aplicația Mammotion și încercați din nou."
+    },
+    "error": {
+      "login_failed": "Autentificare eșuată. Verificați adresa de e-mail și parola contului, apoi încercați din nou.",
+      "cannot_connect": "Nu se poate conecta la cloud-ul Mammotion. Verificați datele de autentificare și rețeaua, apoi încercați din nou.",
+      "no_account_no_ble": "Nu au fost introduse datele contului și nu a fost găsit niciun dispozitiv Bluetooth. Introduceți datele de autentificare ale contului Mammotion sau configurați un dispozitiv Bluetooth."
     },
     "flow_title": "{name}",
     "step": {
@@ -174,7 +179,8 @@
           "MODE_EDIT_BOUNDARY": "Editare limită",
           "MODE_LOCATION_ERROR": "Eroare de localizare",
           "MODE_BOUNDARY_JUMP": "Limită depășită",
-          "MODE_CHARGING_PAUSE": "Încărcare în pauză"
+          "MODE_CHARGING_PAUSE": "Încărcare în pauză",
+          "MODE_POWER_OFF": "Oprire"
         }
       },
       "work_area": {
@@ -220,7 +226,8 @@
           "RTK_OVER_DATALINK": "Antenă prin DataLink",
           "RTK_OVER_INTERNET": "Antenă prin Internet",
           "INAVI_NET_RTK": "iNavi NetRTK",
-          "INAVI_RTK_BOX": "Cutie iNavi RTK"
+          "INAVI_RTK_BOX": "Cutie iNavi RTK",
+          "UNKNOWN": "Necunoscut"
         }
       },
       "rtk_app_connect_type": {
@@ -239,6 +246,34 @@
           "MOWING": "Cosire",
           "COMPLETE": "Finalizat",
           "ABORTED": "Abandonat"
+        }
+      },
+      "spino_status": {
+        "name": "Stare",
+        "state": {
+          "UNKNOWN": "Necunoscut",
+          "IDLE": "Așteptare",
+          "PREPARE": "Pregătire",
+          "WAIT_WATER": "Umplere cu apă",
+          "WORKING": "Lucrează",
+          "PAUSE_GO_CHARGE": "Revine la încărcare (în pauză)",
+          "END_GO_CHARGE": "Revine la încărcare",
+          "CHARGING": "Încărcare",
+          "LEAVE_DOCK": "Părăsește stația",
+          "RECALLING": "Se întoarce"
+        }
+      },
+      "spino_work_mode": {
+        "name": "Mod de curățare",
+        "state": {
+          "UNKNOWN": "Necunoscut",
+          "RECHARGE": "Reîncărcare",
+          "AUTO": "Toate",
+          "FLOOR": "Fund",
+          "WALL": "Perete",
+          "ECO": "Eco",
+          "LINE": "Linia apei",
+          "CUSTOM": "Personalizat"
         }
       }
     },
@@ -278,6 +313,9 @@
       },
       "restart_mower": {
         "name": "Repornire mașina de tuns"
+      },
+      "spino_refresh_status": {
+        "name": "Reîmprospătează starea"
       }
     },
     "switch": {
@@ -325,6 +363,18 @@
       },
       "voice_on_off": {
         "name": "Voce pornit/oprit"
+      },
+      "spino_buzzer": {
+        "name": "Avertizor sonor"
+      },
+      "spino_turbo_clean": {
+        "name": "Curățare turbo"
+      },
+      "spino_platform_cleaning": {
+        "name": "Curățarea platformei"
+      },
+      "spino_waterline_parking": {
+        "name": "Parcare la linia de apă"
       }
     },
     "select": {
@@ -417,6 +467,19 @@
           "off": "Oprit",
           "stop_mowing": "Oprire cosire",
           "low_speed_mowing": "Cosire cu viteză redusă"
+        }
+      },
+      "spino_work_mode": {
+        "name": "Mod de curățare",
+        "state": {
+          "UNKNOWN": "Necunoscut",
+          "RECHARGE": "Reîncărcare",
+          "AUTO": "Toate",
+          "FLOOR": "Fund",
+          "WALL": "Perete",
+          "ECO": "Eco",
+          "LINE": "Linia apei",
+          "CUSTOM": "Personalizat"
         }
       }
     },
@@ -802,6 +865,9 @@
     },
     "api_limit_exceeded": {
       "message": "Limita de solicitări API a fost depăşită."
+    },
+    "account_in_use": {
+      "message": "Contul dvs. Mammotion este deja activ într-o altă sesiune. Deconectați-vă din aplicația Mammotion și încercați din nou."
     },
     "cloud_setup_failed": {
       "message": "Nu se poate conecta la cloud-ul Mammotion. Verificați rețeaua și încercați să reîncărcați integrarea."

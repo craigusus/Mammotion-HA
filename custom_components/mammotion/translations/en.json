@@ -10,7 +10,12 @@
       "not_supported": "Device not supported",
       "reconfigure_successful": "Re-configure successful",
       "api_limit_exceeded": "API rate limit has been exceeded. Please try again later.",
-      "cannot_connect": "Unable to connect to the Mammotion cloud. Check your credentials and network, then try again."
+      "account_in_use": "Your Mammotion account is already in use in another session. Sign out of the Mammotion app and try again."
+    },
+    "error": {
+      "login_failed": "Login failed. Check your account email and password, then try again.",
+      "cannot_connect": "Unable to connect to the Mammotion cloud. Check your credentials and network, then try again.",
+      "no_account_no_ble": "No account details entered and no Bluetooth device found. Enter your Mammotion account credentials, or set up a Bluetooth device."
     },
     "flow_title": "{name}",
     "step": {
@@ -177,7 +182,8 @@
           "MODE_EDIT_BOUNDARY": "Editing boundary",
           "MODE_LOCATION_ERROR": "Location error",
           "MODE_BOUNDARY_JUMP": "Boundary crossed",
-          "MODE_CHARGING_PAUSE": "Charging paused"
+          "MODE_CHARGING_PAUSE": "Charging paused",
+          "MODE_POWER_OFF": "Powering off"
         }
       },
       "work_area": {
@@ -233,7 +239,8 @@
           "RTK_OVER_DATALINK": "Antenna Over Datalink",
           "RTK_OVER_INTERNET": "Antenna Over Internet",
           "INAVI_NET_RTK": "iNavi NetRTK",
-          "INAVI_RTK_BOX": "iNavi RTK Box"
+          "INAVI_RTK_BOX": "iNavi RTK Box",
+          "UNKNOWN": "Unknown"
         }
       },
       "rtk_app_connect_type": {
@@ -242,6 +249,37 @@
           "UNKNOWN": "Unknown",
           "CON_BLE": "BLE",
           "CON_WIFI": "Wi-Fi"
+        }
+      },
+      "spino_battery": {
+        "name": "Battery"
+      },
+      "spino_status": {
+        "name": "Status",
+        "state": {
+          "UNKNOWN": "Unknown",
+          "IDLE": "Standby",
+          "PREPARE": "Preparing",
+          "WAIT_WATER": "Filling with water",
+          "WORKING": "Working",
+          "PAUSE_GO_CHARGE": "Returning to charge (paused)",
+          "END_GO_CHARGE": "Returning to charge",
+          "CHARGING": "Charging",
+          "LEAVE_DOCK": "Leaving dock",
+          "RECALLING": "Returning"
+        }
+      },
+      "spino_work_mode": {
+        "name": "Cleaning mode",
+        "state": {
+          "UNKNOWN": "Unknown",
+          "RECHARGE": "Recharge",
+          "AUTO": "All",
+          "FLOOR": "Floor",
+          "WALL": "Wall",
+          "ECO": "Eco",
+          "LINE": "Waterline",
+          "CUSTOM": "Custom"
         }
       }
     },
@@ -281,6 +319,15 @@
       },
       "restart_mower": {
         "name": "Restart mower"
+      },
+      "spino_fetch_map": {
+        "name": "Fetch pool map"
+      },
+      "spino_fetch_line": {
+        "name": "Fetch cleaning route"
+      },
+      "spino_refresh_status": {
+        "name": "Refresh status"
       }
     },
     "switch": {
@@ -328,6 +375,18 @@
       },
       "voice_on_off": {
         "name": "Voice on/off"
+      },
+      "spino_buzzer": {
+        "name": "Buzzer"
+      },
+      "spino_turbo_clean": {
+        "name": "Turbo cleaning"
+      },
+      "spino_platform_cleaning": {
+        "name": "Platform cleaning"
+      },
+      "spino_waterline_parking": {
+        "name": "Waterline parking"
       }
     },
     "select": {
@@ -421,6 +480,36 @@
           "MAN": "Male",
           "WOMAN": "Female"
         }
+      },
+      "spino_work_mode": {
+        "name": "Cleaning mode",
+        "state": {
+          "UNKNOWN": "Unknown",
+          "RECHARGE": "Recharge",
+          "AUTO": "All",
+          "FLOOR": "Floor",
+          "WALL": "Wall",
+          "ECO": "Eco",
+          "LINE": "Waterline",
+          "CUSTOM": "Custom"
+        }
+      },
+      "spino_wall_material": {
+        "name": "Wall material",
+        "state": {
+          "GLASS": "Glass",
+          "CERAMICS": "Tile",
+          "SAND_STONE": "Mosaic"
+        }
+      },
+      "spino_bottom_type": {
+        "name": "Pool bottom shape",
+        "state": {
+          "RIGHT_ANGLE_SIMPLE": "Right angle (simple)",
+          "RIGHT_ANGLE_COMPLEX": "Right angle (complex)",
+          "CURVE_SIMPLE": "Curved (simple)",
+          "CURVE_COMPLEX": "Curved (complex)"
+        }
       }
     },
     "number": {
@@ -453,6 +542,9 @@
       },
       "map_offset_lon": {
         "name": "Map offset longitude"
+      },
+      "spino_floor_speed": {
+        "name": "Pool floor movement speed"
       }
     },
     "device_tracker": {
@@ -805,6 +897,9 @@
     },
     "api_limit_exceeded": {
       "message": "API rate limit has been exceeded."
+    },
+    "account_in_use": {
+      "message": "Your Mammotion account is already active in another session. Sign out of the Mammotion app and try again."
     },
     "cloud_setup_failed": {
       "message": "Unable to connect to the Mammotion cloud. Check your network and try reloading the integration."

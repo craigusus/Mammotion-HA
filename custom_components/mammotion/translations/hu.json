@@ -10,7 +10,12 @@
       "not_supported": "Az eszköz nem támogatott",
       "reconfigure_successful": "Újrakonfigurálás sikeres",
       "api_limit_exceeded": "Az API sebességkorlátját elérte. Próbáld újra később.",
-      "cannot_connect": "Nem lehet csatlakozni a Mammotion felhőhöz. Ellenőrizd a hitelesítő adatokat és a hálózatot, majd próbáld újra."
+      "account_in_use": "A Mammotion fiókod már aktív egy másik munkamenetben. Jelentkezz ki a Mammotion alkalmazásból, és próbáld újra."
+    },
+    "error": {
+      "login_failed": "A bejelentkezés sikertelen. Ellenőrizze fiókja e-mail-címét és jelszavát, majd próbálja újra.",
+      "cannot_connect": "Nem lehet csatlakozni a Mammotion felhőhöz. Ellenőrizd a hitelesítő adatokat és a hálózatot, majd próbáld újra.",
+      "no_account_no_ble": "Nincsenek megadva fiókadatok, és nem található Bluetooth-eszköz. Adja meg a Mammotion-fiók hitelesítő adatait, vagy állítson be egy Bluetooth-eszközt."
     },
     "flow_title": "{name}",
     "step": {
@@ -174,7 +179,8 @@
           "MODE_EDIT_BOUNDARY": "Határ szerkesztése",
           "MODE_LOCATION_ERROR": "Helymeghatározási hiba",
           "MODE_BOUNDARY_JUMP": "Határ átlépve",
-          "MODE_CHARGING_PAUSE": "Töltés szünetel"
+          "MODE_CHARGING_PAUSE": "Töltés szünetel",
+          "MODE_POWER_OFF": "Kikapcsolás"
         }
       },
       "work_area": {
@@ -230,7 +236,8 @@
           "RTK_OVER_DATALINK": "Antenna adatkapcsolaton",
           "RTK_OVER_INTERNET": "Antenna interneten",
           "INAVI_NET_RTK": "iNavi NetRTK",
-          "INAVI_RTK_BOX": "iNavi RTK doboz"
+          "INAVI_RTK_BOX": "iNavi RTK doboz",
+          "UNKNOWN": "Ismeretlen"
         }
       },
       "rtk_app_connect_type": {
@@ -239,6 +246,34 @@
           "UNKNOWN": "Ismeretlen",
           "CON_BLE": "BLE",
           "CON_WIFI": "Wi-Fi"
+        }
+      },
+      "spino_status": {
+        "name": "Állapot",
+        "state": {
+          "UNKNOWN": "Ismeretlen",
+          "IDLE": "Készenlét",
+          "PREPARE": "Előkészítés",
+          "WAIT_WATER": "Vízzel töltés",
+          "WORKING": "Dolgozik",
+          "PAUSE_GO_CHARGE": "Visszatérés töltésre (szüneteltetve)",
+          "END_GO_CHARGE": "Visszatérés töltésre",
+          "CHARGING": "Töltés",
+          "LEAVE_DOCK": "Elhagyja a dokkolót",
+          "RECALLING": "Visszatér"
+        }
+      },
+      "spino_work_mode": {
+        "name": "Tisztítási mód",
+        "state": {
+          "UNKNOWN": "Ismeretlen",
+          "RECHARGE": "Újratöltés",
+          "AUTO": "Mind",
+          "FLOOR": "Fenék",
+          "WALL": "Fal",
+          "ECO": "Eco",
+          "LINE": "Vízvonal",
+          "CUSTOM": "Egyéni"
         }
       }
     },
@@ -278,6 +313,9 @@
       },
       "restart_mower": {
         "name": "Fűnyíró újraindítása"
+      },
+      "spino_refresh_status": {
+        "name": "Állapot frissítése"
       }
     },
     "switch": {
@@ -325,6 +363,18 @@
       },
       "voice_on_off": {
         "name": "Beszédhang be/ki"
+      },
+      "spino_buzzer": {
+        "name": "Hangjelző"
+      },
+      "spino_turbo_clean": {
+        "name": "Turbó tisztítás"
+      },
+      "spino_platform_cleaning": {
+        "name": "Emelvény tisztítása"
+      },
+      "spino_waterline_parking": {
+        "name": "Parkolás a vízvonalnál"
       }
     },
     "select": {
@@ -417,6 +467,19 @@
         "state": {
           "MAN": "Férfi",
           "WOMAN": "Nő"
+        }
+      },
+      "spino_work_mode": {
+        "name": "Tisztítási mód",
+        "state": {
+          "UNKNOWN": "Ismeretlen",
+          "RECHARGE": "Újratöltés",
+          "AUTO": "Mind",
+          "FLOOR": "Fenék",
+          "WALL": "Fal",
+          "ECO": "Eco",
+          "LINE": "Vízvonal",
+          "CUSTOM": "Egyéni"
         }
       }
     },
@@ -802,6 +865,9 @@
     },
     "api_limit_exceeded": {
       "message": "Az API sebességkorlátját elérte."
+    },
+    "account_in_use": {
+      "message": "A Mammotion fiókod már aktív egy másik munkamenetben. Jelentkezz ki a Mammotion alkalmazásból, és próbáld újra."
     },
     "cloud_setup_failed": {
       "message": "Nem lehet csatlakozni a Mammotion felhőhöz. Ellenőrizd a hálózatot, és próbáld meg újratölteni az integrációt."

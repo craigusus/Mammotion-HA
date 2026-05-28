@@ -10,7 +10,12 @@
       "not_supported": "Urządzenie nie jest obsługiwane",
       "reconfigure_successful": "Ponowna konfiguracja zakończona powodzeniem",
       "api_limit_exceeded": "Przekroczono limit API. Spróbuj ponownie później.",
-      "cannot_connect": "Nie można połączyć się z chmurą Mammotion. Sprawdź dane logowania i sieć, a następnie spróbuj ponownie."
+      "account_in_use": "Twoje konto Mammotion jest już aktywne w innej sesji. Wyloguj się z aplikacji Mammotion i spróbuj ponownie."
+    },
+    "error": {
+      "login_failed": "Logowanie nie powiodło się. Sprawdź adres e-mail i hasło konta, a następnie spróbuj ponownie.",
+      "cannot_connect": "Nie można połączyć się z chmurą Mammotion. Sprawdź dane logowania i sieć, a następnie spróbuj ponownie.",
+      "no_account_no_ble": "Nie wprowadzono danych konta i nie znaleziono urządzenia Bluetooth. Wprowadź dane logowania do konta Mammotion lub skonfiguruj urządzenie Bluetooth."
     },
     "flow_title": "{name}",
     "step": {
@@ -174,7 +179,8 @@
           "MODE_EDIT_BOUNDARY": "Edytowanie granicy",
           "MODE_LOCATION_ERROR": "Błąd lokalizacji",
           "MODE_BOUNDARY_JUMP": "Przekroczono granicę",
-          "MODE_CHARGING_PAUSE": "Ładowanie wstrzymane"
+          "MODE_CHARGING_PAUSE": "Ładowanie wstrzymane",
+          "MODE_POWER_OFF": "Wyłączanie"
         }
       },
       "work_area": {
@@ -220,7 +226,8 @@
           "RTK_OVER_DATALINK": "Antena przez DataLink",
           "RTK_OVER_INTERNET": "Antena przez Internet",
           "INAVI_NET_RTK": "iNavi NetRTK",
-          "INAVI_RTK_BOX": "iNavi RTK Box"
+          "INAVI_RTK_BOX": "iNavi RTK Box",
+          "UNKNOWN": "Nieznany"
         }
       },
       "rtk_app_connect_type": {
@@ -239,6 +246,34 @@
           "MOWING": "Koszenie",
           "COMPLETE": "Ukończono",
           "ABORTED": "Przerwano"
+        }
+      },
+      "spino_status": {
+        "name": "Stan",
+        "state": {
+          "UNKNOWN": "Nieznany",
+          "IDLE": "Czuwanie",
+          "PREPARE": "Przygotowanie",
+          "WAIT_WATER": "Napełnianie wodą",
+          "WORKING": "Pracuje",
+          "PAUSE_GO_CHARGE": "Powrót do ładowania (wstrzymano)",
+          "END_GO_CHARGE": "Powrót do ładowania",
+          "CHARGING": "Ładowanie",
+          "LEAVE_DOCK": "Opuszcza stację",
+          "RECALLING": "Powraca"
+        }
+      },
+      "spino_work_mode": {
+        "name": "Tryb czyszczenia",
+        "state": {
+          "UNKNOWN": "Nieznany",
+          "RECHARGE": "Doładowanie",
+          "AUTO": "Wszystko",
+          "FLOOR": "Dno",
+          "WALL": "Ściana",
+          "ECO": "Eco",
+          "LINE": "Linia wody",
+          "CUSTOM": "Niestandardowy"
         }
       }
     },
@@ -278,6 +313,9 @@
       },
       "restart_mower": {
         "name": "Uruchom ponownie kosiarkę"
+      },
+      "spino_refresh_status": {
+        "name": "Odśwież stan"
       }
     },
     "switch": {
@@ -325,6 +363,18 @@
       },
       "voice_on_off": {
         "name": "Głos wł./wył."
+      },
+      "spino_buzzer": {
+        "name": "Brzęczyk"
+      },
+      "spino_turbo_clean": {
+        "name": "Czyszczenie turbo"
+      },
+      "spino_platform_cleaning": {
+        "name": "Czyszczenie platformy"
+      },
+      "spino_waterline_parking": {
+        "name": "Parkowanie na linii wody"
       }
     },
     "select": {
@@ -417,6 +467,19 @@
           "off": "Wył.",
           "stop_mowing": "Zatrzymaj koszenie",
           "low_speed_mowing": "Koszenie z małą prędkością"
+        }
+      },
+      "spino_work_mode": {
+        "name": "Tryb czyszczenia",
+        "state": {
+          "UNKNOWN": "Nieznany",
+          "RECHARGE": "Doładowanie",
+          "AUTO": "Wszystko",
+          "FLOOR": "Dno",
+          "WALL": "Ściana",
+          "ECO": "Eco",
+          "LINE": "Linia wody",
+          "CUSTOM": "Niestandardowy"
         }
       }
     },
@@ -802,6 +865,9 @@
     },
     "api_limit_exceeded": {
       "message": "Przekroczono limit API."
+    },
+    "account_in_use": {
+      "message": "Twoje konto Mammotion jest już aktywne w innej sesji. Wyloguj się z aplikacji Mammotion i spróbuj ponownie."
     },
     "cloud_setup_failed": {
       "message": "Nie można połączyć się z chmurą Mammotion. Sprawdź sieć i spróbuj ponownie załadować integrację."

@@ -10,7 +10,12 @@
       "not_supported": "Apparaat wordt niet ondersteund",
       "reconfigure_successful": "Opnieuw instellen gelukt",
       "api_limit_exceeded": "De API-limiet is overschreden. Probeer het later opnieuw.",
-      "cannot_connect": "Kan geen verbinding maken met de Mammotion-cloud. Controleer uw inloggegevens en netwerk en probeer het opnieuw."
+      "account_in_use": "Uw Mammotion-account is al actief in een andere sessie. Log uit de Mammotion-app en probeer het opnieuw."
+    },
+    "error": {
+      "login_failed": "Inloggen mislukt. Controleer het e-mailadres en wachtwoord van je account en probeer het opnieuw.",
+      "cannot_connect": "Kan geen verbinding maken met de Mammotion-cloud. Controleer uw inloggegevens en netwerk en probeer het opnieuw.",
+      "no_account_no_ble": "Geen accountgegevens ingevoerd en geen Bluetooth-apparaat gevonden. Voer je Mammotion-accountgegevens in of stel een Bluetooth-apparaat in."
     },
     "flow_title": "{name}",
     "step": {
@@ -174,7 +179,8 @@
           "MODE_EDIT_BOUNDARY": "Grens aan het aanpassen",
           "MODE_LOCATION_ERROR": "Locatie fout",
           "MODE_BOUNDARY_JUMP": "Grens overschreden",
-          "MODE_CHARGING_PAUSE": "Opladen gepauzeerd"
+          "MODE_CHARGING_PAUSE": "Opladen gepauzeerd",
+          "MODE_POWER_OFF": "Uitschakelen"
         }
       },
       "work_area": {
@@ -220,7 +226,8 @@
           "RTK_OVER_DATALINK": "Antenne via DataLink",
           "RTK_OVER_INTERNET": "Antenne via internet",
           "INAVI_NET_RTK": "iNavi NetRTK",
-          "INAVI_RTK_BOX": "iNavi RTK-box"
+          "INAVI_RTK_BOX": "iNavi RTK-box",
+          "UNKNOWN": "Onbekend"
         }
       },
       "rtk_app_connect_type": {
@@ -239,6 +246,34 @@
           "MOWING": "Aan het maaien",
           "COMPLETE": "Voltooid",
           "ABORTED": "Afgebroken"
+        }
+      },
+      "spino_status": {
+        "name": "Status",
+        "state": {
+          "UNKNOWN": "Onbekend",
+          "IDLE": "Stand-by",
+          "PREPARE": "Voorbereiden",
+          "WAIT_WATER": "Vullen met water",
+          "WORKING": "Bezig",
+          "PAUSE_GO_CHARGE": "Terug naar laden (gepauzeerd)",
+          "END_GO_CHARGE": "Terug naar laden",
+          "CHARGING": "Aan het opladen",
+          "LEAVE_DOCK": "Verlaat dock",
+          "RECALLING": "Aan het terugkeren"
+        }
+      },
+      "spino_work_mode": {
+        "name": "Reinigingsmodus",
+        "state": {
+          "UNKNOWN": "Onbekend",
+          "RECHARGE": "Opladen",
+          "AUTO": "Alles",
+          "FLOOR": "Bodem",
+          "WALL": "Wand",
+          "ECO": "Eco",
+          "LINE": "Waterlijn",
+          "CUSTOM": "Aangepast"
         }
       }
     },
@@ -278,6 +313,9 @@
       },
       "restart_mower": {
         "name": "Maaier herstarten"
+      },
+      "spino_refresh_status": {
+        "name": "Status vernieuwen"
       }
     },
     "switch": {
@@ -325,6 +363,18 @@
       },
       "voice_on_off": {
         "name": "Stem aan/uit"
+      },
+      "spino_buzzer": {
+        "name": "Zoemer"
+      },
+      "spino_turbo_clean": {
+        "name": "Turbo-reiniging"
+      },
+      "spino_platform_cleaning": {
+        "name": "Platformreiniging"
+      },
+      "spino_waterline_parking": {
+        "name": "Parkeren bij de waterlijn"
       }
     },
     "select": {
@@ -417,6 +467,19 @@
           "off": "Uit",
           "stop_mowing": "Maaien stoppen",
           "low_speed_mowing": "Maaien op lage snelheid"
+        }
+      },
+      "spino_work_mode": {
+        "name": "Reinigingsmodus",
+        "state": {
+          "UNKNOWN": "Onbekend",
+          "RECHARGE": "Opladen",
+          "AUTO": "Alles",
+          "FLOOR": "Bodem",
+          "WALL": "Wand",
+          "ECO": "Eco",
+          "LINE": "Waterlijn",
+          "CUSTOM": "Aangepast"
         }
       }
     },
@@ -802,6 +865,9 @@
     },
     "api_limit_exceeded": {
       "message": "De API-limiet is overschreden."
+    },
+    "account_in_use": {
+      "message": "Uw Mammotion-account is al actief in een andere sessie. Log uit de Mammotion-app en probeer het opnieuw."
     },
     "cloud_setup_failed": {
       "message": "Kan geen verbinding maken met de Mammotion-cloud. Controleer uw netwerk en probeer de integratie opnieuw te laden."

@@ -10,7 +10,12 @@
       "not_supported": "Naprava ni podprta",
       "reconfigure_successful": "Ponastavitev uspešna",
       "api_limit_exceeded": "Prekoračena je bila omejitev API-ja. Poskusite znova pozneje.",
-      "cannot_connect": "Povezava z oblakom Mammotion ni mogoča. Preverite poverilnice in omrežje ter poskusite znova."
+      "account_in_use": "Vaš račun Mammotion je že aktiven v drugi seji. Odjavite se iz aplikacije Mammotion in poskusite znova."
+    },
+    "error": {
+      "login_failed": "Prijava ni uspela. Preverite e-poštni naslov in geslo računa ter poskusite znova.",
+      "cannot_connect": "Povezava z oblakom Mammotion ni mogoča. Preverite poverilnice in omrežje ter poskusite znova.",
+      "no_account_no_ble": "Podatki računa niso bili vneseni in naprava Bluetooth ni bila najdena. Vnesite poverilnice računa Mammotion ali nastavite napravo Bluetooth."
     },
     "flow_title": "{name}",
     "step": {
@@ -174,7 +179,8 @@
           "MODE_EDIT_BOUNDARY": "Urejanje meje",
           "MODE_LOCATION_ERROR": "Napaka lokacije",
           "MODE_BOUNDARY_JUMP": "Prečkanje meje",
-          "MODE_CHARGING_PAUSE": "Polnjenje zaustavljeno"
+          "MODE_CHARGING_PAUSE": "Polnjenje zaustavljeno",
+          "MODE_POWER_OFF": "Izklop"
         }
       },
       "work_area": {
@@ -220,7 +226,8 @@
           "RTK_OVER_DATALINK": "Antena prek DataLink",
           "RTK_OVER_INTERNET": "Antena prek interneta",
           "INAVI_NET_RTK": "iNavi NetRTK",
-          "INAVI_RTK_BOX": "iNavi RTK škatla"
+          "INAVI_RTK_BOX": "iNavi RTK škatla",
+          "UNKNOWN": "Neznano"
         }
       },
       "rtk_app_connect_type": {
@@ -239,6 +246,34 @@
           "MOWING": "Košnja",
           "COMPLETE": "Dokončano",
           "ABORTED": "Prekinjeno"
+        }
+      },
+      "spino_status": {
+        "name": "Stanje",
+        "state": {
+          "UNKNOWN": "Neznano",
+          "IDLE": "Pripravljenost",
+          "PREPARE": "Priprava",
+          "WAIT_WATER": "Polnjenje z vodo",
+          "WORKING": "Deluje",
+          "PAUSE_GO_CHARGE": "Vračanje na polnjenje (zaustavljeno)",
+          "END_GO_CHARGE": "Vračanje na polnjenje",
+          "CHARGING": "Polnjenje",
+          "LEAVE_DOCK": "Zapušča postajo",
+          "RECALLING": "Vrača se"
+        }
+      },
+      "spino_work_mode": {
+        "name": "Način čiščenja",
+        "state": {
+          "UNKNOWN": "Neznano",
+          "RECHARGE": "Ponovno polnjenje",
+          "AUTO": "Vse",
+          "FLOOR": "Dno",
+          "WALL": "Stena",
+          "ECO": "Eko",
+          "LINE": "Vodna gladina",
+          "CUSTOM": "Po meri"
         }
       }
     },
@@ -278,6 +313,9 @@
       },
       "restart_mower": {
         "name": "Ponovni zagon kosilnice"
+      },
+      "spino_refresh_status": {
+        "name": "Osveži stanje"
       }
     },
     "switch": {
@@ -325,6 +363,18 @@
       },
       "voice_on_off": {
         "name": "Glas vklopljeno/izklopljeno"
+      },
+      "spino_buzzer": {
+        "name": "Brenčalo"
+      },
+      "spino_turbo_clean": {
+        "name": "Turbo čiščenje"
+      },
+      "spino_platform_cleaning": {
+        "name": "Čiščenje ploščadi"
+      },
+      "spino_waterline_parking": {
+        "name": "Parkiranje na vodni gladini"
       }
     },
     "select": {
@@ -417,6 +467,19 @@
           "off": "Izklopljeno",
           "stop_mowing": "Ustavi košnjo",
           "low_speed_mowing": "Košnja z nizko hitrostjo"
+        }
+      },
+      "spino_work_mode": {
+        "name": "Način čiščenja",
+        "state": {
+          "UNKNOWN": "Neznano",
+          "RECHARGE": "Ponovno polnjenje",
+          "AUTO": "Vse",
+          "FLOOR": "Dno",
+          "WALL": "Stena",
+          "ECO": "Eko",
+          "LINE": "Vodna gladina",
+          "CUSTOM": "Po meri"
         }
       }
     },
@@ -802,6 +865,9 @@
     },
     "api_limit_exceeded": {
       "message": "Prekočena je bila omejitev API-ja."
+    },
+    "account_in_use": {
+      "message": "Vaš račun Mammotion je že aktiven v drugi seji. Odjavite se iz aplikacije Mammotion in poskusite znova."
     },
     "cloud_setup_failed": {
       "message": "Povezava z oblakom Mammotion ni mogoča. Preverite omrežje in poskusite znova naložiti integracijo."

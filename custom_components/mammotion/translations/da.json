@@ -10,7 +10,12 @@
       "not_supported": "Enheden understøttes ikke",
       "reconfigure_successful": "Omkonfiguration lykkedes",
       "api_limit_exceeded": "API-anmodningsgrænsen er overskredet. Prøv igen senere.",
-      "cannot_connect": "Kan ikke oprette forbindelse til Mammotion-skyen. Kontroller dine legitimationsoplysninger og netværk, og prøv igen."
+      "account_in_use": "Din Mammotion-konto er allerede aktiv i en anden session. Log ud af Mammotion-appen og prøv igen."
+    },
+    "error": {
+      "login_failed": "Login mislykkedes. Kontrollér din kontos e-mail og adgangskode, og prøv igen.",
+      "cannot_connect": "Kan ikke oprette forbindelse til Mammotion-skyen. Kontroller dine legitimationsoplysninger og netværk, og prøv igen.",
+      "no_account_no_ble": "Der er ikke angivet kontooplysninger, og der blev ikke fundet nogen Bluetooth-enhed. Angiv dine Mammotion-kontooplysninger, eller konfigurer en Bluetooth-enhed."
     },
     "flow_title": "{name}",
     "step": {
@@ -174,7 +179,8 @@
           "MODE_EDIT_BOUNDARY": "Redigerer grænse",
           "MODE_LOCATION_ERROR": "Positionsfejl",
           "MODE_BOUNDARY_JUMP": "Grænse overskredet",
-          "MODE_CHARGING_PAUSE": "Opladning sat på pause"
+          "MODE_CHARGING_PAUSE": "Opladning sat på pause",
+          "MODE_POWER_OFF": "Slukker"
         }
       },
       "work_area": {
@@ -220,7 +226,8 @@
           "RTK_OVER_DATALINK": "Antenne over Datalink",
           "RTK_OVER_INTERNET": "Antenne over internet",
           "INAVI_NET_RTK": "iNavi NetRTK",
-          "INAVI_RTK_BOX": "iNavi RTK-boks"
+          "INAVI_RTK_BOX": "iNavi RTK-boks",
+          "UNKNOWN": "Ukendt"
         }
       },
       "rtk_app_connect_type": {
@@ -239,6 +246,34 @@
           "MOWING": "Klipper",
           "COMPLETE": "Fuldført",
           "ABORTED": "Afbrudt"
+        }
+      },
+      "spino_status": {
+        "name": "Status",
+        "state": {
+          "UNKNOWN": "Ukendt",
+          "IDLE": "Standby",
+          "PREPARE": "Forbereder",
+          "WAIT_WATER": "Fylder med vand",
+          "WORKING": "Arbejder",
+          "PAUSE_GO_CHARGE": "Vender tilbage til opladning (pause)",
+          "END_GO_CHARGE": "Vender tilbage til opladning",
+          "CHARGING": "Oplader",
+          "LEAVE_DOCK": "Forlader dock",
+          "RECALLING": "Vender tilbage"
+        }
+      },
+      "spino_work_mode": {
+        "name": "Rengøringstilstand",
+        "state": {
+          "UNKNOWN": "Ukendt",
+          "RECHARGE": "Genoplad",
+          "AUTO": "Alle",
+          "FLOOR": "Bund",
+          "WALL": "Væg",
+          "ECO": "Eco",
+          "LINE": "Vandlinje",
+          "CUSTOM": "Brugerdefineret"
         }
       }
     },
@@ -278,6 +313,9 @@
       },
       "restart_mower": {
         "name": "Genstart plæneklipperen"
+      },
+      "spino_refresh_status": {
+        "name": "Opdater status"
       }
     },
     "switch": {
@@ -325,6 +363,18 @@
       },
       "voice_on_off": {
         "name": "Stemme til/fra"
+      },
+      "spino_buzzer": {
+        "name": "Summer"
+      },
+      "spino_turbo_clean": {
+        "name": "Turbo-rengøring"
+      },
+      "spino_platform_cleaning": {
+        "name": "Platformsrengøring"
+      },
+      "spino_waterline_parking": {
+        "name": "Parkering ved vandlinjen"
       }
     },
     "select": {
@@ -417,6 +467,19 @@
           "off": "Slukket",
           "stop_mowing": "Stop klipning",
           "low_speed_mowing": "Klipning med lav hastighed"
+        }
+      },
+      "spino_work_mode": {
+        "name": "Rengøringstilstand",
+        "state": {
+          "UNKNOWN": "Ukendt",
+          "RECHARGE": "Genoplad",
+          "AUTO": "Alle",
+          "FLOOR": "Bund",
+          "WALL": "Væg",
+          "ECO": "Eco",
+          "LINE": "Vandlinje",
+          "CUSTOM": "Brugerdefineret"
         }
       }
     },
@@ -802,6 +865,9 @@
     },
     "api_limit_exceeded": {
       "message": "API-anmodningsgrænsen er overskredet."
+    },
+    "account_in_use": {
+      "message": "Din Mammotion-konto er allerede aktiv i en anden session. Log ud af Mammotion-appen og prøv igen."
     },
     "cloud_setup_failed": {
       "message": "Kan ikke oprette forbindelse til Mammotion-skyen. Kontroller dit netværk, og prøv at genindlæse integrationen."

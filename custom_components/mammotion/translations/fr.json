@@ -10,7 +10,12 @@
       "not_supported": "Appareil non pris en charge",
       "reconfigure_successful": "Reconfiguration réussie",
       "api_limit_exceeded": "La limite de débit de l'API a été dépassée. Veuillez réessayer plus tard.",
-      "cannot_connect": "Impossible de se connecter au cloud Mammotion. Vérifiez vos identifiants et votre réseau, puis réessayez."
+      "account_in_use": "Votre compte Mammotion est déjà actif dans une autre session. Déconnectez-vous de l'application Mammotion et réessayez."
+    },
+    "error": {
+      "login_failed": "Échec de la connexion. Vérifiez l'adresse e-mail et le mot de passe de votre compte, puis réessayez.",
+      "cannot_connect": "Impossible de se connecter au cloud Mammotion. Vérifiez vos identifiants et votre réseau, puis réessayez.",
+      "no_account_no_ble": "Aucune information de compte saisie et aucun appareil Bluetooth trouvé. Saisissez les identifiants de votre compte Mammotion ou configurez un appareil Bluetooth."
     },
     "flow_title": "{name}",
     "step": {
@@ -174,7 +179,8 @@
           "MODE_EDIT_BOUNDARY": "Édition des limites",
           "MODE_LOCATION_ERROR": "Erreur de localisation",
           "MODE_BOUNDARY_JUMP": "Limite franchie",
-          "MODE_CHARGING_PAUSE": "Charge en pause"
+          "MODE_CHARGING_PAUSE": "Charge en pause",
+          "MODE_POWER_OFF": "Extinction en cours"
         }
       },
       "work_area": {
@@ -220,7 +226,8 @@
           "RTK_OVER_DATALINK": "Antenne par DataLink",
           "RTK_OVER_INTERNET": "Antenne sur Internet",
           "INAVI_NET_RTK": "iNavi NetRTK",
-          "INAVI_RTK_BOX": "Boîtier iNavi RTK"
+          "INAVI_RTK_BOX": "Boîtier iNavi RTK",
+          "UNKNOWN": "Inconnu"
         }
       },
       "rtk_app_connect_type": {
@@ -239,6 +246,34 @@
           "MOWING": "En cours de tonte",
           "COMPLETE": "Terminé",
           "ABORTED": "Abandonné"
+        }
+      },
+      "spino_status": {
+        "name": "Statut",
+        "state": {
+          "UNKNOWN": "Inconnu",
+          "IDLE": "Veille",
+          "PREPARE": "Préparation",
+          "WAIT_WATER": "Remplissage d'eau",
+          "WORKING": "En marche",
+          "PAUSE_GO_CHARGE": "Retour en charge (en pause)",
+          "END_GO_CHARGE": "Retour en charge",
+          "CHARGING": "En charge",
+          "LEAVE_DOCK": "Quitte la station",
+          "RECALLING": "Retour"
+        }
+      },
+      "spino_work_mode": {
+        "name": "Mode de nettoyage",
+        "state": {
+          "UNKNOWN": "Inconnu",
+          "RECHARGE": "Recharge",
+          "AUTO": "Tout",
+          "FLOOR": "Fond",
+          "WALL": "Paroi",
+          "ECO": "Eco",
+          "LINE": "Ligne d'eau",
+          "CUSTOM": "Personnalisé"
         }
       }
     },
@@ -278,6 +313,9 @@
       },
       "restart_mower": {
         "name": "Redémarrer la tondeuse"
+      },
+      "spino_refresh_status": {
+        "name": "Actualiser le statut"
       }
     },
     "switch": {
@@ -325,6 +363,18 @@
       },
       "voice_on_off": {
         "name": "Voix activée/désactivée"
+      },
+      "spino_buzzer": {
+        "name": "Avertisseur sonore"
+      },
+      "spino_turbo_clean": {
+        "name": "Nettoyage turbo"
+      },
+      "spino_platform_cleaning": {
+        "name": "Nettoyage de la plateforme"
+      },
+      "spino_waterline_parking": {
+        "name": "Stationnement à la ligne d'eau"
       }
     },
     "select": {
@@ -417,6 +467,19 @@
           "off": "Désactivé",
           "stop_mowing": "Arrêter de tondre",
           "low_speed_mowing": "Tonte à vitesse réduite"
+        }
+      },
+      "spino_work_mode": {
+        "name": "Mode de nettoyage",
+        "state": {
+          "UNKNOWN": "Inconnu",
+          "RECHARGE": "Recharge",
+          "AUTO": "Tout",
+          "FLOOR": "Fond",
+          "WALL": "Paroi",
+          "ECO": "Eco",
+          "LINE": "Ligne d'eau",
+          "CUSTOM": "Personnalisé"
         }
       }
     },
@@ -802,6 +865,9 @@
     },
     "api_limit_exceeded": {
       "message": "La limite de débit de l'API a été dépassée."
+    },
+    "account_in_use": {
+      "message": "Votre compte Mammotion est déjà actif dans une autre session. Déconnectez-vous de l'application Mammotion et réessayez."
     },
     "cloud_setup_failed": {
       "message": "Impossible de se connecter au cloud Mammotion. Vérifiez votre réseau et essayez de recharger l'intégration."
