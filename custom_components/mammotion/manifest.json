@@ -23,6 +23,6 @@
   "loggers": ["pymammotion"],
   "iot_class": "local_push",
   "requirements": [
-    "pymammotion @ https://github.com/craigusus/PyMammotion/archive/refs/tags/v0.8.17.tar.gz"
+    "pymammotion @ https://github.com/craigusus/PyMammotion/archive/refs/tags/v0.8.18.tar.gz"
   ]
 }
