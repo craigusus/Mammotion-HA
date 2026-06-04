@@ -85,7 +85,6 @@ class MammotionBaseEntity(CoordinatorEntity[MammotionBaseUpdateCoordinator[Any]]
             name=self.coordinator.device_name,
             sw_version=swversion,
             model=self.coordinator.device.product_model or model_id,
-            suggested_area="Garden",
             connections=connections,
         )
 
@@ -161,7 +160,6 @@ class MammotionBaseRTKEntity(CoordinatorEntity[MammotionRTKCoordinator]):  # typ
             model=rtk_device.name,
             model_id=self.coordinator.device.product_key,
             sw_version=self.coordinator.data.device_version,
-            suggested_area="Garden",
             connections={
                 (CONNECTION_BLUETOOTH, rtk_device.bt_mac),
                 (CONNECTION_NETWORK_MAC, rtk_device.wifi_mac),
@@ -231,7 +229,6 @@ class MammotionBaseSpinoEntity(CoordinatorEntity[MammotionSpinoCoordinator]):  #
             model=spino_device.name,
             model_id=self.coordinator.device.product_key,
             sw_version=spino_device.device_firmwares.device_version,
-            suggested_area="Pool",
         )
 
     @property
@@ -309,7 +306,6 @@ class MammotionCameraBaseEntity(Camera, ABC):  # type: ignore[misc]
             name=self.coordinator.device_name,
             sw_version=swversion,
             model=self.coordinator.device.product_model or model_id,
-            suggested_area="Garden",
             connections=connections,
         )
 
