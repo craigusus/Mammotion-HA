@@ -42,7 +42,7 @@ class MammotionTracker(MammotionBaseEntity, TrackerEntity, RestoreEntity):  # ty
         """Initialize the Tracker."""
         super().__init__(coordinator, f"{coordinator.device_name}_gps")
 
-        self._attr_name = coordinator.device_name
+        self._attr_name = None
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
