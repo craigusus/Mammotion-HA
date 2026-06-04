@@ -469,18 +469,21 @@ WORK_SENSOR_TYPES: tuple[MammotionWorkSensorEntityDescription, ...] = (
 RTK_SENSOR_TYPES: tuple[MammotionRTKSensorEntityDescription, ...] = (
     MammotionRTKSensorEntityDescription(
         key="rtk_lora",
+        icon="mdi:radio-tower",
         value_fn=lambda rtk_data: rtk_data.lora_version,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
     MammotionRTKSensorEntityDescription(
         key="rtk_latitude",
         native_unit_of_measurement=DEGREE,
+        icon="mdi:latitude",
         value_fn=lambda rtk_data: rtk_data.lat * 180 / math.pi,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
     MammotionRTKSensorEntityDescription(
         key="rtk_longitude",
         native_unit_of_measurement=DEGREE,
+        icon="mdi:longitude",
         value_fn=lambda rtk_data: rtk_data.lon * 180 / math.pi,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
@@ -495,6 +498,7 @@ RTK_SENSOR_TYPES: tuple[MammotionRTKSensorEntityDescription, ...] = (
     MammotionRTKSensorEntityDescription(
         key="rtk_sats_num",
         state_class=SensorStateClass.MEASUREMENT,
+        icon="mdi:satellite-variant",
         value_fn=lambda rtk_data: rtk_data.sats_num,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
@@ -502,6 +506,7 @@ RTK_SENSOR_TYPES: tuple[MammotionRTKSensorEntityDescription, ...] = (
         key="position_mode",
         state_class=None,
         device_class=SensorDeviceClass.ENUM,
+        icon="mdi:map-marker-check",
         value_fn=lambda rtk_data: RTKPositionMode(rtk_data.rtk_status).name,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
@@ -509,6 +514,7 @@ RTK_SENSOR_TYPES: tuple[MammotionRTKSensorEntityDescription, ...] = (
         key="rtk_app_connect_type",
         state_class=None,
         device_class=SensorDeviceClass.ENUM,
+        icon="mdi:connection",
         value_fn=lambda rtk_data: AppConnectType(rtk_data.app_connect_type).name,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
