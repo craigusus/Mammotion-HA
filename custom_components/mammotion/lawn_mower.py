@@ -324,6 +324,7 @@ class MammotionLawnMowerEntity(MammotionBaseEntity, LawnMowerEntity):  # type: i
         """Start docking."""
         trans_key = "pause_failed"
 
+        await self.coordinator.async_start_report_stream()
         charge_state = self.rpt_dev_status.charge_state
         mode = self.rpt_dev_status.sys_status
         if mode is None:
@@ -352,6 +353,8 @@ class MammotionLawnMowerEntity(MammotionBaseEntity, LawnMowerEntity):  # type: i
                 raise HomeAssistantError(
                     translation_domain=DOMAIN, translation_key=trans_key
                 ) from exc
+            finally:
+                await self.coordinator.async_request_report_snapshot()
 
     async def async_pause(self) -> None:
         """Pause mower."""
