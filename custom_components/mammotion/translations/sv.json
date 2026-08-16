@@ -118,10 +118,10 @@
         "name": "Tid kvar"
       },
       "l1_satellites": {
-        "name": "L1-satelliter (samvisning)"
+        "name": "L1 signal quality"
       },
       "l2_satellites": {
-        "name": "L2-satelliter (samvisning)"
+        "name": "L2 signal quality"
       },
       "positioning_mode": {
         "name": "RTK position"
@@ -186,6 +186,31 @@
       "work_area": {
         "name": "Aktuell plats"
       },
+      "map_sync_status": {
+        "name": "Kartsynkroniseringsstatus",
+        "state": {
+          "synced": "Synkroniserad",
+          "syncing": "Synkroniserar",
+          "out_of_sync": "Inte synkroniserad"
+        }
+      },
+      "mqtt_status": {
+        "name": "MQTT-status",
+        "state": {
+          "reported_online": "Rapporterad online",
+          "reported_offline": "Rapporterad offline"
+        }
+      },
+      "task_area_status": {
+        "name": "Uppgiftsområde {name}",
+        "state": {
+          "NOT_STARTED": "Inte startat",
+          "WAITING": "Väntar",
+          "MOWING": "Klipper",
+          "COMPLETE": "Slutfört",
+          "ABORTED": "Avbrutet"
+        }
+      },
       "maintenance_distance": {
         "name": "Total körsträcka"
       },
@@ -238,22 +263,15 @@
           "CON_WIFI": "Wi-Fi"
         }
       },
-      "task_area_status": {
-        "name": "Uppgiftsområde {name}",
-        "state": {
-          "NOT_STARTED": "Inte startat",
-          "WAITING": "Väntar",
-          "MOWING": "Klipper",
-          "COMPLETE": "Slutfört",
-          "ABORTED": "Avbrutet"
-        }
+      "spino_battery": {
+        "name": "Batteri"
       },
       "spino_status": {
         "name": "Status",
         "state": {
           "UNKNOWN": "Okänd",
           "IDLE": "Standby",
-          "PREPARE": "Förbereder",
+          "PREPARE": "Standby",
           "WAIT_WATER": "Fyller med vatten",
           "WORKING": "Arbetar",
           "PAUSE_GO_CHARGE": "Återvänder för laddning (pausad)",
@@ -267,7 +285,7 @@
         "name": "Rengöringsläge",
         "state": {
           "UNKNOWN": "Okänd",
-          "RECHARGE": "Ladda om",
+          "OFF": "Av",
           "AUTO": "Alla",
           "FLOOR": "Botten",
           "WALL": "Vägg",
@@ -275,6 +293,66 @@
           "LINE": "Vattenlinje",
           "CUSTOM": "Anpassad"
         }
+      },
+      "spino_ble_rssi": {
+        "name": "BLE RSSI"
+      },
+      "spino_wifi_rssi": {
+        "name": "Wi-Fi RSSI"
+      },
+      "spino_error_time": {
+        "name": "Tidpunkt för senaste fel"
+      },
+      "spino_error_message": {
+        "name": "Senaste fel"
+      },
+      "spino_error_code": {
+        "name": "Senaste felkod"
+      },
+      "spino_mqtt_status": {
+        "name": "MQTT-status",
+        "state": {
+          "online": "Online",
+          "offline": "Offline"
+        }
+      },
+      "co_view_l1": {
+        "name": "L1 satellites (co-viewing)"
+      },
+      "co_view_l2": {
+        "name": "L2 satellites (co-viewing)"
+      },
+      "pos_level": {
+        "name": "Position level"
+      },
+      "rtk_signal": {
+        "name": "RTK signal quality"
+      },
+      "device_signal": {
+        "name": "Device signal quality",
+        "state": {
+          "0": "Bra",
+          "1": "Bra",
+          "2": "Svag",
+          "3": "Ingen"
+        }
+      },
+      "age": {
+        "name": "RTK correction age"
+      },
+      "base_link_status": {
+        "name": "Base link status",
+        "state": {
+          "0": "Bra",
+          "1": "Svag",
+          "2": "Svag",
+          "3": "Ingen"
+        }
+      }
+    },
+    "binary_sensor": {
+      "spino_charging": {
+        "name": "Laddar"
       }
     },
     "button": {
@@ -313,6 +391,12 @@
       },
       "restart_mower": {
         "name": "Starta om gräsklipparen"
+      },
+      "spino_fetch_map": {
+        "name": "Hämta poolkarta"
+      },
+      "spino_fetch_line": {
+        "name": "Hämta rengöringsrutt"
       },
       "spino_refresh_status": {
         "name": "Uppdatera status"
@@ -446,6 +530,14 @@
           "zero_turn": "Runt egen axel"
         }
       },
+      "wildlife_safety": {
+        "name": "Djursäkerhet",
+        "state": {
+          "off": "Av",
+          "stop_mowing": "Stoppa klippning",
+          "low_speed_mowing": "Klippning med låg hastighet"
+        }
+      },
       "cutter_mode": {
         "name": "Klipphastighet",
         "state": {
@@ -461,25 +553,35 @@
           "WOMAN": "Kvinna"
         }
       },
-      "wildlife_safety": {
-        "name": "Djursäkerhet",
-        "state": {
-          "off": "Av",
-          "stop_mowing": "Stoppa klippning",
-          "low_speed_mowing": "Klippning med låg hastighet"
-        }
-      },
       "spino_work_mode": {
         "name": "Rengöringsläge",
         "state": {
           "UNKNOWN": "Okänd",
-          "RECHARGE": "Ladda om",
+          "OFF": "Av",
           "AUTO": "Alla",
           "FLOOR": "Botten",
           "WALL": "Vägg",
           "ECO": "Eco",
           "LINE": "Vattenlinje",
           "CUSTOM": "Anpassad"
+        }
+      },
+      "spino_wall_material": {
+        "name": "Väggmaterial",
+        "state": {
+          "GLASS": "Glas",
+          "CERAMICS": "Kakel",
+          "SAND_STONE": "Stenmaterial",
+          "VINYL": "Vinyl"
+        }
+      },
+      "spino_bottom_type": {
+        "name": "Poolbottens form",
+        "state": {
+          "RIGHT_ANGLE_SIMPLE": "Rätvinklig (enkel)",
+          "RIGHT_ANGLE_COMPLEX": "Rätvinklig (komplex)",
+          "CURVE_SIMPLE": "Böjd (enkel)",
+          "CURVE_COMPLEX": "Böjd (komplex)"
         }
       }
     },
@@ -513,6 +615,9 @@
       },
       "map_offset_lon": {
         "name": "Kartoffset longitud"
+      },
+      "spino_floor_speed": {
+        "name": "Hastighet på poolbotten"
       }
     },
     "device_tracker": {

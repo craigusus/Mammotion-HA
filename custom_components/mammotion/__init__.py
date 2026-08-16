@@ -30,7 +30,6 @@ from homeassistant.helpers.device_registry import (
     async_get as async_get_device_registry,
 )
 from homeassistant.helpers.event import async_call_later
-from homeassistant.helpers.storage import Store
 from homeassistant.loader import async_get_integration
 from pymammotion.aliyun.exceptions import TooManyRequestsException
 from pymammotion.aliyun.model.dev_by_account_response import Device
@@ -46,6 +45,7 @@ from pymammotion.transport.base import (
 from pymammotion.utility.device_type import DeviceType
 from Tea.exceptions import UnretryableException
 
+from .config import MammotionConfigStore, async_get_store, async_pop_store
 from .const import (
     CONF_ACCOUNTNAME,
     CONF_AEP_DATA,
@@ -316,7 +316,7 @@ async def _await_device_connection(
         with suppress(TransportError):
             await handle.connect_transport(TransportType.BLE)
     try:
-        await handle.wait_until_connected(timeout=30, mqtt_stable_for=10)
+        await handle.wait_until_connected(timeout=60, mqtt_stable_for=10)
     except CancelledError:
         raise HomeAssistantError("Setup cancelled, transport connection timed out")
 
@@ -327,6 +327,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: MammotionConfigEntry) ->
     addresses = entry.data.get(CONF_BLE_DEVICES, {})
     integration = await async_get_integration(hass, DOMAIN)
     mammotion = MammotionClient(ha_version=integration.version.split("-")[0])
+
+    store = async_get_store(hass, entry)
+    await store.async_load_device_data()
+
+    async def shutdown_mammotion(_: Event | None = None) -> None:
+        await mammotion.stop()
+
+    entry.async_on_unload(
+        hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, shutdown_mammotion)
+    )
+    entry.async_on_unload(shutdown_mammotion)
+
     account = entry.data.get(CONF_ACCOUNTNAME)
     password = entry.data.get(CONF_PASSWORD)
     use_wifi = entry.data.get(CONF_USE_WIFI, True)
@@ -389,14 +401,30 @@ async def async_setup_entry(hass: HomeAssistant, entry: MammotionConfigEntry) ->
         async def _on_unrecoverable_auth_error(
             account_id: str, transport_type: TransportType, _: Exception
         ) -> None:
-            """Trigger HA re-authentication when all automatic recovery has failed."""
+            """Trigger HA re-authentication when the account's login itself is dead.
+
+            pymammotion fires this only when the HTTP refresh token has been
+            rejected, i.e. nothing about the account can be renewed without the
+            user.  A single cloud transport failing while the login is still valid
+            does NOT reach here — that only marks its own mowers unavailable.
+
+            Raising ConfigEntryAuthFailed here would do nothing: pymammotion
+            invokes this callback inside contextlib.suppress(Exception), so the
+            exception is discarded and no reauth flow ever starts.  Schedule the
+            flow explicitly instead.  async_start_reauth is a no-op when a reauth
+            or reconfigure flow is already in progress, so repeated failures from
+            several devices collapse into one prompt.
+
+            The client is deliberately left running: BLE-connected mowers work
+            without any cloud credentials and must keep working while the user
+            re-authenticates.
+            """
             LOGGER.error(
-                "Mammotion account %s: %s auth recovery exhausted",
+                "Mammotion account %s: %s auth recovery exhausted — re-authentication required",
                 account_id,
                 transport_type.value,
             )
-            await mammotion.stop()
-            raise ConfigEntryAuthFailed()
+            entry.async_start_reauth(hass)
 
         mammotion.on_unrecoverable_auth_error = _on_unrecoverable_auth_error
 
@@ -654,14 +682,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: MammotionConfigEntry) ->
 
     mammotion.setup_all_mower_watchers()
 
-    async def shutdown_mammotion(_: Event | None = None) -> None:
-        await mammotion.stop()
-
-    entry.async_on_unload(
-        hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, shutdown_mammotion)
-    )
-    entry.async_on_unload(shutdown_mammotion)
-
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
     return True
@@ -777,14 +797,16 @@ async def async_unload_entry(hass: HomeAssistant, entry: MammotionConfigEntry) -
                 await mower.api.remove_device(mower.name)
             except TimeoutError:
                 """Do nothing as this sometimes occurs with disconnecting BLE."""
+        if store := async_pop_store(hass, entry):
+            await store.async_flush()
     return bool(unload_ok)
 
 
 async def async_remove_entry(hass: HomeAssistant, entry: MammotionConfigEntry) -> None:
     """Remove stored data when the integration is deleted."""
+    async_pop_store(hass, entry)
+    await MammotionConfigStore(hass, entry.entry_id).async_remove()
     if not hass.config_entries.async_entries(DOMAIN):
-        store = Store(hass, version=1, minor_version=2, key=DOMAIN)
-        await store.async_remove()
         hass.data.pop(DOMAIN, None)
 
 
