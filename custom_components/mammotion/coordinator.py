@@ -652,8 +652,8 @@ class MammotionBaseUpdateCoordinator[DataT](DataUpdateCoordinator[DataT]):  # ty
         if device is None:
             return
         device_registry = dr.async_get(self.hass)
-        device_entry = device_registry.async_get_device(
-            identifiers={(DOMAIN, self.device_name)}
+        device_entry = device_registry.async_get_device_by_identifier(
+            (DOMAIN, self.device_name)
         )
         if device_entry is None:
             return

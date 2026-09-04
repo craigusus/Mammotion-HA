@@ -103,8 +103,8 @@ class MammotionBaseEntity(CoordinatorEntity[MammotionBaseUpdateCoordinator[Any]]
             return
 
         device_registry = async_get_device_registry(self.hass)
-        device = device_registry.async_get_device(
-            identifiers={(DOMAIN, self.coordinator.unique_name)}
+        device = device_registry.async_get_device_by_identifier(
+            (DOMAIN, self.coordinator.unique_name)
         )
         if device is None:
             return
@@ -193,8 +193,8 @@ class MammotionBaseRTKEntity(CoordinatorEntity[MammotionRTKCoordinator]):  # typ
         rtk_data = self.coordinator.data
 
         device_registry = async_get_device_registry(self.hass)
-        device = device_registry.async_get_device(
-            identifiers={(DOMAIN, self.coordinator.unique_name)}
+        device = device_registry.async_get_device_by_identifier(
+            (DOMAIN, self.coordinator.unique_name)
         )
         if device is None:
             return

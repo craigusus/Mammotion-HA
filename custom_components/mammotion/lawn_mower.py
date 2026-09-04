@@ -460,8 +460,8 @@ class MammotionLawnMowerEntity(MammotionBaseEntity, LawnMowerEntity):  # type: i
 
         device_registry = dr.async_get(self.hass)
 
-        device = device_registry.async_get_device(
-            identifiers={(DOMAIN, self.coordinator.device_name)}
+        device = device_registry.async_get_device_by_identifier(
+            (DOMAIN, self.coordinator.device_name)
         )
 
         if device:
