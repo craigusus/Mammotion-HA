@@ -33,6 +33,7 @@ from homeassistant.loader import async_get_integration
 from pymammotion.aliyun.exceptions import TooManyRequestsException
 from pymammotion.aliyun.model.dev_by_account_response import Device
 from pymammotion.client import MammotionClient
+from pymammotion.data.error_codes import bundled_error_codes
 from pymammotion.data.model.device import MowingDevice, PoolCleanerDevice
 from pymammotion.transport.base import (
     AccountInUseError,
@@ -643,6 +644,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: MammotionConfigEntry) ->
     entry.runtime_data = mammotion_devices
 
     mammotion.setup_all_mower_watchers()
+
+    # Warm the lru_cache'd error-code table off the event loop now, so the first
+    # lookup during entity setup (e.g. sensor native_value) doesn't block on disk.
+    await hass.async_add_executor_job(bundled_error_codes)
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
