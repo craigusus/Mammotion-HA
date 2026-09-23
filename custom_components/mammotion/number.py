@@ -131,12 +131,16 @@ NUMBER_ENTITIES: tuple[MammotionConfigNumberEntityDescription, ...] = (
     MammotionConfigNumberEntityDescription(
         key="start_progress",
         native_min_value=0,
-        native_max_value=100,
+        # The cloud's own schema caps this at 99, not 100.
+        native_max_value=99,
         native_step=1,
         mode=NumberMode.SLIDER,
         native_unit_of_measurement=PERCENTAGE,
         set_fn=lambda coordinator, value: setattr(
-            coordinator.operation_settings, "start_progress", value
+            coordinator.operation_settings, "start_progress", int(value)
+        ),
+        set_async_fn=lambda coordinator, value: (
+            coordinator.async_change_progress_if_working()
         ),
     ),
     MammotionConfigNumberEntityDescription(
@@ -240,20 +244,20 @@ async def async_setup_entry(
             limits = handle.device_limits
         entities: list[MammotionConfigNumberEntity] = []
 
-        for entity_description in NUMBER_WORKING_ENTITIES:
-            entities.append(
-                MammotionWorkingNumberEntity(
-                    mower.reporting_coordinator, entity_description, limits
-                )
+        entities.extend(
+            MammotionWorkingNumberEntity(
+                mower.reporting_coordinator, entity_description, limits
             )
+            for entity_description in NUMBER_WORKING_ENTITIES
+        )
 
         if DeviceType.is_luba_pro(mower.device.device_name):
-            for entity_description in AUDIO_NUMBER_ENTITIES:
-                entities.append(
-                    MammotionConfigNumberEntity(
-                        mower.reporting_coordinator, entity_description
-                    )
+            entities.extend(
+                MammotionConfigNumberEntity(
+                    mower.reporting_coordinator, entity_description
                 )
+                for entity_description in AUDIO_NUMBER_ENTITIES
+            )
 
         if DeviceType.supports_charge_limit(
             mower.device.device_name,
@@ -265,36 +269,36 @@ async def async_setup_entry(
                 )
             )
 
-        for entity_description in MAP_OFFSET_ENTITIES:
-            entities.append(
-                MammotionConfigNumberEntity(
-                    mower.reporting_coordinator, entity_description
-                )
+        entities.extend(
+            MammotionConfigNumberEntity(
+                mower.reporting_coordinator, entity_description
             )
+            for entity_description in MAP_OFFSET_ENTITIES
+        )
 
-        for entity_description in NUMBER_ENTITIES:
-            entities.append(
-                MammotionConfigNumberEntity(
-                    mower.reporting_coordinator, entity_description
-                )
+        entities.extend(
+            MammotionConfigNumberEntity(
+                mower.reporting_coordinator, entity_description
             )
+            for entity_description in NUMBER_ENTITIES
+        )
 
         if DeviceType.is_yuka(mower.device.device_name) and not DeviceType.is_yuka_mini(
             mower.device.device_name
         ):
-            for entity_description in YUKA_NUMBER_ENTITIES:
-                entities.append(
-                    MammotionConfigNumberEntity(
-                        mower.reporting_coordinator, entity_description
-                    )
+            entities.extend(
+                MammotionConfigNumberEntity(
+                    mower.reporting_coordinator, entity_description
                 )
+                for entity_description in YUKA_NUMBER_ENTITIES
+            )
         if not DeviceType.is_yuka(mower.device.device_name):
-            for entity_description in LUBA_WORKING_ENTITIES:
-                entities.append(
-                    MammotionWorkingNumberEntity(
-                        mower.reporting_coordinator, entity_description, limits
-                    )
+            entities.extend(
+                MammotionWorkingNumberEntity(
+                    mower.reporting_coordinator, entity_description, limits
                 )
+                for entity_description in LUBA_WORKING_ENTITIES
+            )
 
         async_add_entities(entities)
 

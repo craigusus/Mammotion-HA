@@ -30,7 +30,7 @@ from homeassistant.helpers.device_registry import (
     async_get as async_get_device_registry,
 )
 from homeassistant.loader import async_get_integration
-from pymammotion.aliyun.exceptions import TooManyRequestsException
+from pymammotion.aliyun.exceptions import CloudSetupError, TooManyRequestsException
 from pymammotion.aliyun.model.dev_by_account_response import Device
 from pymammotion.client import MammotionClient
 from pymammotion.data.error_codes import bundled_error_codes
@@ -61,6 +61,7 @@ from .const import (
     CONF_MAMMOTION_DEVICE_RECORDS,
     CONF_MAMMOTION_MQTT,
     CONF_MOW_PATH_FETCH_ENABLED,
+    CONF_NOTIFY,
     CONF_PREFER_BLE,
     CONF_STAY_CONNECTED_BLUETOOTH,
     CONF_USE_WIFI,
@@ -69,6 +70,7 @@ from .const import (
     DOMAIN,
     EXPIRED_CREDENTIAL_EXCEPTIONS,
     LOGGER,
+    NOTIFY_WARNINGS,
     POOL_CLEANER_SUPPORT,
 )
 from .coordinator import (
@@ -86,6 +88,7 @@ from .models import (
     MammotionRTKData,
     MammotionSpinoData,
 )
+from .notifications import MowerNotifier
 from .services import async_setup_services
 
 PLATFORMS: list[Platform] = [
@@ -144,9 +147,8 @@ async def _async_attempt_login(
             )
         else:
             await mammotion.login_and_initiate_cloud(account, password, session)
-        return True
     except ClientConnectorError as err:
-        raise ConfigEntryNotReady(err)
+        raise ConfigEntryNotReady(err) from err
     except LoginFailedError as err:
         # restore_credentials only raises this after the cached login was rejected
         # AND its fallback password login failed — the cache is dead either way.
@@ -169,7 +171,6 @@ async def _async_attempt_login(
             await mammotion.login_and_initiate_cloud(
                 account, password, aiohttp_client.async_get_clientsession(hass)
             )
-            return True
         except (LoginFailedError, ReLoginRequiredError) as retry_err:
             if ble_fallback:
                 LOGGER.warning(
@@ -178,6 +179,8 @@ async def _async_attempt_login(
                 )
                 return False
             raise ConfigEntryAuthFailed(retry_err) from retry_err
+        else:
+            return True
     except AccountInUseError as err:
         if ble_fallback:
             LOGGER.warning(
@@ -195,15 +198,28 @@ async def _async_attempt_login(
         raise ConfigEntryError(
             translation_domain=DOMAIN, translation_key="api_limit_exceeded"
         ) from err
+    except CloudSetupError as err:
+        # Raised only when the Aliyun platform is the account's sole transport.
+        if ble_fallback:
+            LOGGER.warning(
+                "Mammotion cloud setup failed; continuing in BLE-only mode: %s", err
+            )
+            return False
+        raise ConfigEntryNotReady(
+            translation_domain=DOMAIN, translation_key="cloud_setup_failed"
+        ) from err
     except UnretryableException as err:
         if ble_fallback:
             LOGGER.warning(
                 "Unretryable login error; continuing in BLE-only mode: %s", err
             )
             return False
-        raise ConfigEntryError(err)
+        raise ConfigEntryError(err) from err
     except Exception:
+        LOGGER.exception("Unexpected error during Mammotion login")
         return False
+    else:
+        return True
 
 
 async def _register_ble_devices(
@@ -371,6 +387,14 @@ async def async_migrate_entry(hass: HomeAssistant, entry: MammotionConfigEntry) 
             data[CONF_CONNECT_DATA] = legacy
         hass.config_entries.async_update_entry(
             entry, data=data, version=1, minor_version=2
+        )
+
+    if entry.version == 1 and entry.minor_version < 3:
+        # Persistent notifications became opt-in; keep them on for existing users.
+        options = dict(entry.options)
+        options.setdefault(CONF_NOTIFY, [NOTIFY_WARNINGS])
+        hass.config_entries.async_update_entry(
+            entry, options=options, version=1, minor_version=3
         )
 
     return True
@@ -594,6 +618,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: MammotionConfigEntry) ->
                 version_coordinator=version_coordinator,
                 map_coordinator=map_coordinator,
                 error_coordinator=error_coordinator,
+                notifier=MowerNotifier(hass, report_coordinator),
             )
         )
 
@@ -644,6 +669,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: MammotionConfigEntry) ->
     entry.runtime_data = mammotion_devices
 
     mammotion.setup_all_mower_watchers()
+    for mower in mammotion_mowers:
+        entry.async_on_unload(mower.notifier.async_start())
 
     # Warm the lru_cache'd error-code table off the event loop now, so the first
     # lookup during entity setup (e.g. sensor native_value) doesn't block on disk.

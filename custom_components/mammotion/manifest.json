@@ -1,7 +1,7 @@
 {
   "domain": "mammotion",
   "name": "Mammotion",
-  "version": "0.7.18",
+  "version": "0.7.19",
   "issue_tracker": "https://github.com/mikey0000/Mammotion-HA/issues",
   "integration_type": "device",
   "bluetooth": [
@@ -34,6 +34,6 @@
   ],
   "iot_class": "local_push",
   "requirements": [
-    "pymammotion @ https://github.com/craigusus/PyMammotion/archive/refs/tags/v0.9.7.tar.gz"
+    "pymammotion @ https://github.com/craigusus/PyMammotion/archive/refs/tags/v0.9.8.tar.gz"
   ]
 }
