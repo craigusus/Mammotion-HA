@@ -77,7 +77,7 @@ class MammotionUpdateEntity(MammotionBaseEntity, UpdateEntity):
 
     def __init__(
         self,
-        coordinator: MammotionBaseUpdateCoordinator[Any],
+        coordinator: MammotionBaseUpdateCoordinator,
         entity_description: MammotionUpdateEntityDescription,
     ) -> None:
         """Initialize a Netgear device."""

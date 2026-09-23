@@ -15,7 +15,7 @@ import time
 from dataclasses import dataclass
 from random import randint
 from types import TracebackType
-from typing import Any, Self, cast
+from typing import Any, cast
 
 import aiohttp
 
@@ -523,7 +523,7 @@ class AgoraAPIClient:
         self.session = session
         self._own_session = session is None
 
-    async def __aenter__(self) -> Self:
+    async def __aenter__(self) -> AgoraAPIClient:
         """Context manager entry."""
         return self
 
@@ -690,7 +690,9 @@ class AgoraAPIClient:
         for obj in objects:
             if obj is not None:
                 # Merge object, filtering out None values (equivalent to undefined in JS)
-                result.update({key: value for key, value in obj.items() if value is not None})
+                for key, value in obj.items():
+                    if value is not None:
+                        result[key] = value
         return result
 
     def _build_request_payload(
@@ -756,7 +758,7 @@ class AgoraAPIClient:
         if edge_addresses:
             buffer["edges_services"] = edge_addresses
 
-        return {
+        request_payload = {
             "appid": app_id,
             "client_ts": client_ts,
             "opid": opid,
@@ -768,6 +770,8 @@ class AgoraAPIClient:
                 }
             ],
         }
+
+        return request_payload
 
     async def _make_api_call(
         self, request_payload: dict[str, Any], proxy_server: str | None = None
@@ -793,16 +797,25 @@ class AgoraAPIClient:
             should_close = True
 
         try:
-            # Primary servers first, then the backups.
-            for domain in (*self.WEBCS_DOMAIN, *self.WEBCS_DOMAIN_BACKUP):
+            # Try primary servers
+            for domain in self.WEBCS_DOMAIN:
                 try:
-                    return await self._call_endpoint(
+                    response = await self._call_endpoint(
                         session, domain, request_payload, proxy_server
                     )
-                except Exception:
-                    logging.getLogger(__name__).debug(
-                        "Agora API server %s failed", domain, exc_info=True
+                    return response
+                except TimeoutError, aiohttp.ClientError, Exception:
+                    continue
+
+            # Fall back to backup servers
+            for domain in self.WEBCS_DOMAIN_BACKUP:
+                try:
+                    response = await self._call_endpoint(
+                        session, domain, request_payload, proxy_server
                     )
+                    return response
+                except TimeoutError, aiohttp.ClientError, Exception:
+                    continue
 
             raise Exception("All Agora API servers failed to respond")
 

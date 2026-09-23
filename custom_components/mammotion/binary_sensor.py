@@ -2,7 +2,6 @@
 
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any
 
 from homeassistant.components.binary_sensor import (
     BinarySensorDeviceClass,
@@ -84,7 +83,7 @@ class MammotionBinarySensorEntity(MammotionBaseEntity, BinarySensorEntity):
 
     def __init__(
         self,
-        coordinator: MammotionBaseUpdateCoordinator[Any],
+        coordinator: MammotionBaseUpdateCoordinator,
         entity_description: MammotionBinarySensorEntityDescription,
     ) -> None:
         """Initialize the binary sensor entity."""

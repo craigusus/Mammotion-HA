@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import asyncio
-import contextlib
 import ipaddress
 import json
 import logging
@@ -11,7 +10,6 @@ import secrets
 import ssl
 import time
 import uuid
-from collections import defaultdict
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from typing import Any
@@ -81,7 +79,7 @@ class ResponseInfo:
 class SdpInfo:
     """SDP parsing information."""
 
-    parsed_sdp: dict[str, Any]
+    parsed_sdp: dict
     fingerprint: str
     ice_ufrag: str
     ice_pwd: str
@@ -142,16 +140,16 @@ class AgoraWebSocketHandler:
         self._keepalive = keepalive
         self._websocket: ClientConnection | None = None
         self._connection_state = "DISCONNECTED"
-        self._message_handlers: dict[str, Callable[..., Any]] = {}
-        self._response_handlers: dict[str, asyncio.Future[Any]] = {}
+        self._message_handlers: dict[str, Callable] = {}
+        self._response_handlers: dict[str, asyncio.Future] = {}
         self.candidates: list[RTCIceCandidateInit] = []
         self._online_users: set[int] = set()
         self._video_streams: dict[int, dict[str, Any]] = {}
         self._answer_sdp: str | None = None
         # Background tasks
-        self._message_loop_task: asyncio.Task[None] | None = None
-        self._ping_task: asyncio.Task[None] | None = None
-        self._fpv_keepalive_task: asyncio.Task[None] | None = None
+        self._message_loop_task: asyncio.Task | None = None
+        self._ping_task: asyncio.Task | None = None
+        self._fpv_keepalive_task: asyncio.Task | None = None
         # Token refresh state
         self._rejoin_token: str | None = None
         self._session_id: str | None = None
@@ -175,7 +173,7 @@ class AgoraWebSocketHandler:
         # of the last attempt; the gateway treats one renew as authoritative.
         self._last_renew_token_at: float = 0.0
         # Peer-recovery debounce task + cooldown timestamp (see _schedule_peer_recovery).
-        self._peer_recover_task: asyncio.Task[None] | None = None
+        self._peer_recover_task: asyncio.Task | None = None
         self._last_peer_recover_at: float = 0.0
         self._peer_recover_attempts: int = 0
         # Whether the gateway offered RTX payload types for this session — see
@@ -315,15 +313,19 @@ class AgoraWebSocketHandler:
                     "Connection timeout for edge address %s, trying next", ws_url
                 )
                 if self._websocket:
-                    with contextlib.suppress(Exception):
+                    try:
                         await self._websocket.close()
+                    except Exception:
+                        pass
                     self._websocket = None
                 continue
             except (WebSocketException, json.JSONDecodeError) as ex:
                 _LOGGER.warning("WebSocket connection failed for %s: %s", ws_url, ex)
                 if self._websocket:
-                    with contextlib.suppress(Exception):
+                    try:
                         await self._websocket.close()
+                    except Exception:
+                        pass
                     self._websocket = None
                 continue
 
@@ -1395,6 +1397,9 @@ class AgoraWebSocketHandler:
     ) -> str | None:
         """Generate SDP answer from ORTC parameters."""
         try:
+            import secrets
+            from collections import defaultdict
+
             ice_params = ortc.get("iceParameters", {})
             dtls_params = ortc.get("dtlsParameters", {})
             rtp_caps = self._negotiated_caps(ortc)
@@ -1561,7 +1566,8 @@ class AgoraWebSocketHandler:
                 sdp_lines.append(f"a=mid:{mid}")
 
                 # Add candidates from Agora response
-                sdp_lines.extend(candidates_by_mid.get("*", []))
+                for cl in candidates_by_mid.get("*", []):
+                    sdp_lines.append(cl)
 
                 # Add RTP extensions - MUST use offer's extension IDs
                 # Build mapping from offer's extension URIs to their IDs
@@ -1633,7 +1639,8 @@ class AgoraWebSocketHandler:
                 specific = candidates_by_mid.get(mid, []) + candidates_by_mid.get(
                     str(idx), []
                 )
-                sdp_lines.extend(specific)
+                for cl in specific:
+                    sdp_lines.append(cl)
 
                 if specific:
                     _LOGGER.debug(
@@ -1647,14 +1654,14 @@ class AgoraWebSocketHandler:
             # _LOGGER.info("Generated SDP lines count: %s", len(sdp_lines))
             # _LOGGER.debug("Generated SDP content: %s", generated_sdp)
 
+            if self._validate_sdp(generated_sdp):
+                return generated_sdp
+            _LOGGER.error("Generated SDP failed validation")
+            return None
+
         except (KeyError, ValueError, AttributeError) as ex:
             _LOGGER.error("Failed to generate answer SDP: %s", ex)
             return None
-
-        if self._validate_sdp(generated_sdp):
-            return generated_sdp
-        _LOGGER.error("Generated SDP failed validation")
-        return None
 
     def _validate_sdp(self, sdp: str) -> bool:
         """Validate SDP format to ensure it's parseable by WebRTC."""
@@ -1931,8 +1938,10 @@ class AgoraWebSocketHandler:
             self._ping_task = None
 
         if self._websocket:
-            with contextlib.suppress(Exception):
+            try:
                 await self._websocket.close()
+            except Exception:  # noqa: BLE001
+                pass
             self._websocket = None
 
         self._connection_state = "DISCONNECTED"
@@ -2000,12 +2009,12 @@ class AgoraWebSocketHandler:
         self._online_users.clear()
         self._video_streams.clear()
 
-    def add_ice_candidate(self, candidate: RTCIceCandidateInit) -> None:
+    def add_ice_candidate(self, candidate: RTCIceCandidateInit):
         """Add an ICE candidate to the pending candidates list."""
         self.candidates.append(candidate)
 
     @staticmethod
-    def is_ipv4(ip_string: str) -> bool:
+    def is_ipv4(ip_string):
         """Check if a given string is a valid IPv4 address.
 
         Args:
@@ -2018,6 +2027,7 @@ class AgoraWebSocketHandler:
         try:
             # Attempt to create an IPv4Address object
             ipaddress.IPv4Address(ip_string)
+            return True
         except ipaddress.AddressValueError:
             # If it's not a valid IPv4 address, an exception will be raised
             return False
@@ -2026,5 +2036,3 @@ class AgoraWebSocketHandler:
             # and ensure it's specifically an IPv4Address error.
             # This is a more robust way to handle potential edge cases.
             return False
-        else:
-            return True

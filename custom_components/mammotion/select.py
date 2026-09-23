@@ -3,7 +3,6 @@
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from functools import partial
-from typing import Any
 
 from homeassistant.components.select import SelectEntity, SelectEntityDescription
 from homeassistant.const import EntityCategory
@@ -41,8 +40,8 @@ class MammotionConfigSelectEntityDescription(SelectEntityDescription):
 
     key: str
     options: list[str]
-    set_fn: Callable[[MammotionBaseUpdateCoordinator[Any], str], None]
-    async_set_fn: Callable[[MammotionBaseUpdateCoordinator[Any]], Awaitable[None]] = None
+    set_fn: Callable[[MammotionBaseUpdateCoordinator, str], None]
+    async_set_fn: Callable[[MammotionBaseUpdateCoordinator], Awaitable[None]] = None
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -51,8 +50,8 @@ class MammotionAsyncConfigSelectEntityDescription(MammotionBaseEntity, SelectEnt
 
     key: str
     options: list[str]
-    get_fn: Callable[[MammotionBaseUpdateCoordinator[Any]], int | None]
-    set_fn: Callable[[MammotionBaseUpdateCoordinator[Any], str], Awaitable[None]]
+    get_fn: Callable[[MammotionBaseUpdateCoordinator], int | None]
+    set_fn: Callable[[MammotionBaseUpdateCoordinator, str], Awaitable[None]]
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -224,7 +223,7 @@ def _device_firmware_version(device_state: object | None) -> str:
 # Define the setup entry function
 def _set_bypass_mode(
     options: list[DetectionStrategy],
-    coordinator: MammotionBaseUpdateCoordinator[Any],
+    coordinator: MammotionBaseUpdateCoordinator,
     value: str,
 ) -> None:
     """Store the ultra_wave value the device uses for the chosen label key."""
@@ -242,29 +241,29 @@ async def async_setup_entry(
     mammotion_devices = entry.runtime_data.mowers
 
     for mower in mammotion_devices:
-        entities: list[SelectEntity] = []
+        entities = []
 
-        entities.extend(
-            MammotionConfigSelectEntity(
-                mower.reporting_coordinator, entity_description
+        for entity_description in SELECT_ENTITIES:
+            entities.append(
+                MammotionConfigSelectEntity(
+                    mower.reporting_coordinator, entity_description
+                )
             )
-            for entity_description in SELECT_ENTITIES
-        )
 
         if DeviceType.is_luba_pro(mower.device.device_name):
-            entities.extend(
+            for entity_description in AUDIO_SELECT_ENTITIES:
+                entities.append(
+                    MammotionAsyncConfigSelectEntity(
+                        mower.reporting_coordinator, entity_description
+                    )
+                )
+
+        for entity_description in ASYNC_SELECT_ENTITIES:
+            entities.append(
                 MammotionAsyncConfigSelectEntity(
                     mower.reporting_coordinator, entity_description
                 )
-                for entity_description in AUDIO_SELECT_ENTITIES
             )
-
-        entities.extend(
-            MammotionAsyncConfigSelectEntity(
-                mower.reporting_coordinator, entity_description
-            )
-            for entity_description in ASYNC_SELECT_ENTITIES
-        )
 
         if DeviceType.supports_wildlife_safety(
             mower.device.device_name,
@@ -298,27 +297,27 @@ async def async_setup_entry(
         )
 
         if DeviceType.is_luba1(mower.device.device_name):
-            entities.extend(
-                MammotionConfigSelectEntity(
-                    mower.reporting_coordinator, entity_description
+            for entity_description in LUBA1_SELECT_ENTITIES:
+                entities.append(
+                    MammotionConfigSelectEntity(
+                        mower.reporting_coordinator, entity_description
+                    )
                 )
-                for entity_description in LUBA1_SELECT_ENTITIES
-            )
         else:
-            entities.extend(
-                MammotionConfigSelectEntity(
-                    mower.reporting_coordinator, entity_description
+            for entity_description in LUBA_PRO_SELECT_ENTITIES:
+                entities.append(
+                    MammotionConfigSelectEntity(
+                        mower.reporting_coordinator, entity_description
+                    )
                 )
-                for entity_description in LUBA_PRO_SELECT_ENTITIES
-            )
 
         if DeviceType.is_support_blade_speed(mower.device.device_name):
-            entities.extend(
-                MammotionAsyncConfigSelectEntity(
-                    mower.reporting_coordinator, entity_description
+            for entity_description in BLADE_SPEED_CONFIG_SELECT_ENTITIES:
+                entities.append(
+                    MammotionAsyncConfigSelectEntity(
+                        mower.reporting_coordinator, entity_description
+                    )
                 )
-                for entity_description in BLADE_SPEED_CONFIG_SELECT_ENTITIES
-            )
 
         async_add_entities(entities)
 

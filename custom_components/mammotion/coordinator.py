@@ -429,13 +429,13 @@ class MammotionBaseUpdateCoordinator[DataT](DataUpdateCoordinator[DataT]):  # ty
                             "Retrieved %d ICE servers from Agora API",
                             len(ice_servers),
                         )
-                except Exception:
-                    LOGGER.exception("Failed to get ICE servers from Agora API")
+                except Exception as e:
+                    LOGGER.error("Failed to get ICE servers from Agora API: %s", e)
                     self.ice_servers = []
 
             LOGGER.debug("Stream token refreshed successfully")
-        except Exception:
-            LOGGER.exception("Failed to refresh stream token")
+        except Exception as ex:
+            LOGGER.error("Failed to refresh stream token: %s", ex)
         return (
             stream_data.data if stream_data is not None else None,
             self._agora_response,
@@ -561,7 +561,6 @@ class MammotionBaseUpdateCoordinator[DataT](DataUpdateCoordinator[DataT]):  # ty
 
     @property
     def mqtt_transport_connected(self) -> bool:
-        """Return True while either cloud MQTT transport of this mower is connected."""
         if handle := self.manager.mower(self.device_name):
             for t_type in (TransportType.CLOUD_ALIYUN, TransportType.CLOUD_MAMMOTION):
                 if handle.is_transport_connected(t_type):
@@ -570,7 +569,6 @@ class MammotionBaseUpdateCoordinator[DataT](DataUpdateCoordinator[DataT]):  # ty
 
     @property
     def mqtt_device_online(self) -> bool:
-        """Return True while the cloud reports this mower online."""
         device = self.manager.get_device_by_name(self.device_name)
         if device is None:
             return False
@@ -775,7 +773,7 @@ class MammotionBaseUpdateCoordinator[DataT](DataUpdateCoordinator[DataT]):  # ty
                 translation_domain=DOMAIN, translation_key="api_limit_exceeded"
             ) from exc
         except NoTransportAvailableError as exc:
-            LOGGER.debug("No Transport: %s", exc)
+            LOGGER.debug(f"No Transport: {exc}")
             self._raise_if_user_waiting(priority, exc)
         except (
             GatewayTimeoutException,
@@ -887,13 +885,15 @@ class MammotionBaseUpdateCoordinator[DataT](DataUpdateCoordinator[DataT]):  # ty
                 priority=priority,
                 **kwargs,
             )
+            self.update_failures = 0
+            return True
         except FailedRequestException:
             self.update_failures += 1
         except EXPIRED_CREDENTIAL_EXCEPTIONS as exc:
             self.update_failures += 1
             await self.async_refresh_login(exc)
         except GatewayTimeoutException as ex:
-            LOGGER.error("Gateway timeout exception: %s", ex.iot_id)
+            LOGGER.error(f"Gateway timeout exception: {ex.iot_id}")
             self.update_failures = 0
             return False
         except DeviceOfflineException:
@@ -925,9 +925,6 @@ class MammotionBaseUpdateCoordinator[DataT](DataUpdateCoordinator[DataT]):  # ty
                 self.device_name,
             )
             return False
-        else:
-            self.update_failures = 0
-            return True
         return False
 
     async def async_send_cloud_command(
@@ -943,17 +940,19 @@ class MammotionBaseUpdateCoordinator[DataT](DataUpdateCoordinator[DataT]):  # ty
 
         try:
             await handle.send_raw(command)
+            self.update_failures = 0
+            return True
         except FailedRequestException:
             self.update_failures += 1
         except EXPIRED_CREDENTIAL_EXCEPTIONS as exc:
             self.update_failures += 1
             await self.async_refresh_login(exc)
         except GatewayTimeoutException as ex:
-            LOGGER.error("Gateway timeout exception: %s", ex.iot_id)
+            LOGGER.error(f"Gateway timeout exception: {ex.iot_id}")
             self.update_failures = 0
             return False
-        except (DeviceOfflineException, NoTransportAvailableError) as ex:
-            LOGGER.error("Device offline: %s", ex.iot_id)
+        except DeviceOfflineException as ex:
+            LOGGER.error(f"Device offline: {ex.iot_id}")
             self.device_offline(device)
             return False
         except (TooManyRequestsException, TransportRateLimitedError) as exc:
@@ -968,9 +967,6 @@ class MammotionBaseUpdateCoordinator[DataT](DataUpdateCoordinator[DataT]):  # ty
             raise ConfigEntryAuthFailed(
                 f"Re-authentication required for Mammotion account: {err}"
             ) from err
-        else:
-            self.update_failures = 0
-            return True
         return False
 
     async def async_send_bluetooth_command(
@@ -1048,9 +1044,7 @@ class MammotionBaseUpdateCoordinator[DataT](DataUpdateCoordinator[DataT]):  # ty
         than assumed to be the iot id.
         """
         http = self._map_backup_http()
-        devices: list[BackupMapItem] = self._map_backup_data(
-            await http.get_map_backup_devices()
-        )
+        devices = self._map_backup_data(await http.get_map_backup_devices())
         for device in devices:
             if device.device_name == self.device_name and device.device_id:
                 return device.device_id
@@ -2716,7 +2710,7 @@ class MammotionReportUpdateCoordinator(MammotionBaseUpdateCoordinator[MowingDevi
                         BLEUnavailableError,
                     ) as exc:
                         LOGGER.debug(
-                            "Command %s failed with exception: %s", command_name, exc
+                            f"Command {command_name} failed with exception: {exc}"
                         )
                     # Not in a `finally`: when the budget expires mid-command this line
                     # is skipped, so the command that actually stalled stays in the list.
@@ -2783,8 +2777,10 @@ class MammotionMaintenanceUpdateCoordinator(MammotionBaseUpdateCoordinator[Maint
         was_working = self._prev_sys_status in MOWING_ACTIVE_MODES
         self._prev_sys_status = sys_status
         if was_working and sys_status == WorkMode.MODE_READY:
-            with contextlib.suppress(DeviceOfflineException, GatewayTimeoutException):
+            try:
                 await self.async_send_command("get_maintenance")
+            except DeviceOfflineException, GatewayTimeoutException:
+                pass
 
     async def _async_update_data(self) -> Maintain:
         """Get data from the device."""
@@ -3088,8 +3084,10 @@ class MammotionDeviceVersionUpdateCoordinator(
             for command, expected_field, already_set in checks:
                 if already_set:
                     continue
-                with contextlib.suppress(DeviceOfflineException):
+                try:
                     await self.async_send_and_wait(command, expected_field)
+                except DeviceOfflineException:
+                    pass
 
             if not device.mower_state.wifi_mac:
                 await self.async_send_command("get_device_network_info")
