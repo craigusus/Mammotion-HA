@@ -19,14 +19,17 @@ users get: until a release carrying these APIs is cut and the pin bumped, a
 HACS install would raise ``ImportError`` / ``AttributeError`` on startup.
 """
 
+import inspect
 import json
 from importlib.metadata import distribution
 from pathlib import Path
 
 import pytest
+from pymammotion.client import MammotionClient
+from pymammotion.device.handle import DeviceHandle
 
 #: Last release that predates the APIs below.  The pin must move past it.
-_RELEASE_WITHOUT_THESE_APIS = "0.9.0"
+_RELEASE_WITHOUT_THESE_APIS = "0.9.9"
 
 _MANIFEST = (
     Path(__file__).parent.parent / "custom_components" / "mammotion" / "manifest.json"
@@ -118,11 +121,109 @@ def test_the_http_client_wraps_the_map_backup_endpoints(method: str) -> None:
     assert "class BackupMapItem(" in _source("http/model/map_backup.py")
 
 
+def test_check_and_get_mow_path_reports_whether_it_fetched() -> None:
+    """``fetch_mow_path`` returns this as ``fetch_started``; 0.9.4 returns None.
+
+    The same release fixes the cache check it relies on: the report's
+    ``path_hash`` is now compared with the hash of the whole line list.
+    """
+    source = _source("client.py")
+    assert "async def check_and_get_mow_path(self, device_name: str) -> bool:" in source
+    assert (
+        "async def check_and_get_dynamics_line(self, device_name: str) -> bool:"
+        in source
+    )
+    assert "def is_mow_path_current(" in _source("data/model/hash_list.py")
+
+
+def test_work_ends_with_the_job_and_fetches_record_their_job() -> None:
+    """running_plan and the unknown-job task sync read these from the data."""
+    assert "plans_fetched_job_id: int = 0" in _source("data/model/hash_list.py")
+    assert "self.work = CurrentTaskSettings()" in _source("data/model/device.py")
+
+
+def test_the_client_offers_a_user_initiated_status_refresh() -> None:
+    """The refresh-status button calls this; 0.9.9 does not have it."""
+    refresh_status = getattr(MammotionClient, "refresh_status", None)
+    assert inspect.iscoroutinefunction(refresh_status)
+    assert list(inspect.signature(refresh_status).parameters) == [
+        "self",
+        "device_name",
+        "account_id",
+    ]
+
+
+def test_the_handle_decides_wifi_movement() -> None:
+    """``movement_path`` and the remote-drive entity gate call this; 0.9.9 does not have it."""
+    supports = getattr(DeviceHandle, "supports_wifi_movement", None)
+    assert callable(supports)
+    assert list(inspect.signature(supports).parameters) == ["self"]
+
+
+@pytest.mark.parametrize(
+    "name",
+    [
+        "RemoteDriveSession",
+        "RemoteDrivePhase",
+        "RemoteDriveEvent",
+        "RemoteDriveEventKind",
+        "RemoteDriveError",
+    ],
+)
+def test_the_remote_drive_session_types_exist(name: str) -> None:
+    """coordinator.py, sensor.py and notifications.py import these; 0.9.9 does not have them."""
+    source = _source("device/remote_drive.py")
+    assert f"class {name}(" in source or f"class {name}:" in source
+
+
+@pytest.mark.parametrize(
+    ("method", "parameters"),
+    [
+        ("start_remote_drive", ["self", "device_name", "account_id", "require_video"]),
+        ("confirm_remote_drive", ["self", "device_name", "account_id"]),
+        ("remote_drive", ["self", "device_name", "linear", "angular", "account_id"]),
+        ("stop_remote_drive", ["self", "device_name", "account_id"]),
+        ("subscribe_remote_drive", ["self", "device_name", "handler", "account_id"]),
+        ("acknowledge_remote_drive_fence", ["self", "device_name", "account_id"]),
+    ],
+)
+def test_the_client_runs_the_remote_drive_session(
+    method: str, parameters: list[str]
+) -> None:
+    """The coordinator drives the session through these; 0.9.9 does not have them."""
+    assert list(inspect.signature(getattr(MammotionClient, method)).parameters) == (
+        parameters
+    )
+
+
+def test_the_handle_exposes_its_remote_drive_session() -> None:
+    """The coordinator reads the phase off this without creating a session."""
+    assert isinstance(DeviceHandle.remote_drive, property)
+
+
 def test_the_shipped_pin_has_moved_past_the_release_without_these_apis() -> None:
     """What HACS installs — which the local source override hides in development."""
     requirements = json.loads(_MANIFEST.read_text())["requirements"]
     pins = [r for r in requirements if r.startswith("pymammotion")]
     assert pins != [f"pymammotion=={_RELEASE_WITHOUT_THESE_APIS}"], (
         f"manifest.json still pins {_RELEASE_WITHOUT_THESE_APIS}, which predates "
-        "the map backup endpoints — cut a release and bump the pin before shipping"
+        "the APIs above — cut a release and bump the pin before shipping"
+    )
+
+
+def test_the_positioning_gates_and_accessors_exist() -> None:
+    """sensor.py and entity.py gate and read the positioning sensors through these; 0.9.9 has none."""
+    device_type = _source("utility/device_type.py")
+    assert "def supports_vision_positioning(" in device_type
+    assert "def supports_lidar_positioning(" in device_type
+    report_info = _source("data/model/report_info.py")
+    for accessor in (
+        "fuse_localization_status",
+        "lidar_positioning_ok",
+        "vision_survival",
+    ):
+        assert f"def {accessor}(" in report_info
+    assert "class VioBrightness(" in _source("utility/constant/device_enums.py")
+    assert "class FuseLocalizationStatus(UnknownTolerantIntEnum)" in _source(
+        "data/model/enums.py"
     )

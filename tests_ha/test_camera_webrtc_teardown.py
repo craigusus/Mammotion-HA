@@ -5,8 +5,8 @@ hook Home Assistant invokes for a *native* WebRTC camera (``camera/webrtc.py``
 registers ``functools.partial(camera.close_webrtc_session, session_id)`` as the
 websocket subscription's teardown, and the base implementation no-ops because
 native cameras have no ``_webrtc_provider``).  A coroutine named
-``async_close_webrtc_session`` is never called by core, so the Agora socket, its
-ping loop and the mower's encoder all outlive the viewer.
+``async_close_webrtc_session`` is never called by core; the synchronous hook
+schedules it so the coordinator can stop the mower after the final feed closes.
 
 Here the hook is invoked exactly as core invokes it — synchronously, return
 value discarded, on a real event loop — and the ICE-server registration is read
@@ -21,10 +21,17 @@ from datetime import timedelta
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
+from agora_session_support import (
+    FakeAgoraSession,
+    install_fake_sessions,
+    make_ap_response,
+    make_stream_data,
+)
 from homeassistant.components.camera import Camera
 from homeassistant.components.web_rtc import async_get_ice_servers
 from homeassistant.core import HomeAssistant
 from homeassistant.setup import async_setup_component
+from pyagorartc import CloseReason
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 from webrtc_models import RTCIceServer
 
@@ -43,18 +50,27 @@ _ICE_SERVER = RTCIceServer(
 
 @pytest.fixture
 async def camera(hass: HomeAssistant) -> MammotionWebRTCCamera:
-    """Build a real camera entity with its Agora handler and coordinator mocked out."""
+    """Build a real camera entity with a live fake session and a mocked coordinator."""
     assert await async_setup_component(hass, "web_rtc", {})
     coordinator = MagicMock()
     coordinator.unique_name = _DEVICE
     coordinator.device.device_name = _DEVICE
     coordinator.manager.stop_stream = AsyncMock()
+    coordinator.async_release_camera_session = AsyncMock()
+    coordinator.async_register_camera_session = AsyncMock()
+    coordinator.has_active_camera_sessions = False
     coordinator.ice_servers = [_ICE_SERVER]
     entity = MammotionWebRTCCamera(coordinator, CAMERAS[0], hass)
     entity.hass = hass
     entity.entity_id = "camera.luba_vs00cld"
-    entity._agora_handler = MagicMock(disconnect=AsyncMock())
+    entity._session = FakeAgoraSession(on_closed=entity._on_closed)
     return entity
+
+
+@pytest.fixture
+def session(camera: MammotionWebRTCCamera) -> FakeAgoraSession:
+    """Return the fixture camera's session, kept after the camera lets go of it."""
+    return camera._session
 
 
 def _core_teardown(camera: MammotionWebRTCCamera, session_id: str) -> None:
@@ -70,41 +86,49 @@ def test_the_hook_core_calls_is_the_one_overridden() -> None:
 
 
 async def test_closing_the_last_session_tears_the_stream_down(
-    hass: HomeAssistant, camera: MammotionWebRTCCamera
+    hass: HomeAssistant,
+    camera: MammotionWebRTCCamera,
+    session: FakeAgoraSession,
 ) -> None:
     """The frontend dropping its only session tears the stream down."""
-    camera._sessions.add("session-1")
+    camera._sessions["session-1"] = MagicMock()
 
     _core_teardown(camera, "session-1")
     await hass.async_block_till_done()
 
-    camera._agora_handler.disconnect.assert_awaited_once()
-    camera.coordinator.manager.stop_stream.assert_awaited_once_with(_DEVICE)
+    assert session.close_calls == 1
+    camera.coordinator.async_release_camera_session.assert_awaited_once_with(
+        "webrtc_camera"
+    )
+    camera.coordinator.manager.stop_stream.assert_not_awaited()
 
 
 async def test_teardown_waits_for_the_last_viewer(
-    hass: HomeAssistant, camera: MammotionWebRTCCamera
+    hass: HomeAssistant,
+    camera: MammotionWebRTCCamera,
+    session: FakeAgoraSession,
 ) -> None:
     """A second viewer still watching keeps the stream up."""
-    camera._sessions.update({"session-1", "session-2"})
+    camera._sessions.update({"session-1": MagicMock(), "session-2": MagicMock()})
 
     _core_teardown(camera, "session-1")
     await hass.async_block_till_done()
-    camera._agora_handler.disconnect.assert_not_awaited()
+    assert session.close_calls == 0
 
     _core_teardown(camera, "session-2")
     await hass.async_block_till_done()
-    camera._agora_handler.disconnect.assert_awaited_once()
+    assert session.close_calls == 1
+    camera.coordinator.async_release_camera_session.assert_awaited_once_with(
+        "webrtc_camera"
+    )
 
 
 async def test_teardown_leaves_the_channel_before_stopping_the_encoder(
-    camera: MammotionWebRTCCamera,
+    camera: MammotionWebRTCCamera, session: FakeAgoraSession
 ) -> None:
     """Order matters: the app leaves the Agora channel, then sends vi_switch=0."""
     order: list[str] = []
-    camera._agora_handler.disconnect = AsyncMock(
-        side_effect=lambda: order.append("leave")
-    )
+    session.on_close = lambda: order.append("leave")
     camera.coordinator.manager.stop_stream = AsyncMock(
         side_effect=lambda _name: order.append("stop")
     )
@@ -115,27 +139,29 @@ async def test_teardown_leaves_the_channel_before_stopping_the_encoder(
 
 
 async def test_stop_command_failure_still_leaves_the_channel(
-    camera: MammotionWebRTCCamera,
+    camera: MammotionWebRTCCamera, session: FakeAgoraSession
 ) -> None:
     """A mower that is offline must not strand the Agora socket open."""
     camera.coordinator.manager.stop_stream = AsyncMock(side_effect=OSError("offline"))
 
     await camera.async_teardown_stream()
 
-    camera._agora_handler.disconnect.assert_awaited_once()
+    assert session.close_calls == 1
 
 
 async def test_unknown_session_does_not_tear_down_a_live_stream(
-    hass: HomeAssistant, camera: MammotionWebRTCCamera
+    hass: HomeAssistant,
+    camera: MammotionWebRTCCamera,
+    session: FakeAgoraSession,
 ) -> None:
     """A stale close for an already-gone session must not kill a newer one."""
-    camera._sessions.add("session-2")
+    camera._sessions["session-2"] = MagicMock()
 
     _core_teardown(camera, "session-1")
     await hass.async_block_till_done()
 
-    camera._agora_handler.disconnect.assert_not_awaited()
-    assert camera._sessions == {"session-2"}
+    assert session.close_calls == 0
+    assert list(camera._sessions) == ["session-2"]
 
 
 async def test_entity_registers_itself_for_service_driven_teardown(
@@ -148,21 +174,80 @@ async def test_entity_registers_itself_for_service_driven_teardown(
     """
     await camera.async_added_to_hass()
 
-    camera.coordinator.register_webrtc_session_control.assert_called_once_with(camera)
+    camera.coordinator.register_webrtc_session_control.assert_called_once_with(
+        camera, "webrtc_camera"
+    )
 
 
 async def test_removal_tears_down_and_detaches(
-    camera: MammotionWebRTCCamera,
+    camera: MammotionWebRTCCamera, session: FakeAgoraSession
 ) -> None:
     """Unload/reload must not leave a stream running with no entity behind it."""
-    camera._sessions.add("session-1")
+    await camera.async_will_remove_from_hass()
+
+    camera.coordinator.register_webrtc_session_control.assert_called_once_with(
+        None, "webrtc_camera"
+    )
+    assert session.close_calls == 1
+    camera.coordinator.manager.stop_stream.assert_awaited_once_with(_DEVICE)
+    assert camera._sessions == {}
+
+
+async def test_removal_leaves_a_sibling_feed_running(
+    camera: MammotionWebRTCCamera, session: FakeAgoraSession
+) -> None:
+    """Removing a camera with no viewer must not stop another camera's stream."""
+    camera.coordinator.has_active_camera_sessions = True
 
     await camera.async_will_remove_from_hass()
 
-    camera.coordinator.register_webrtc_session_control.assert_called_once_with(None)
-    camera._agora_handler.disconnect.assert_awaited_once()
-    camera.coordinator.manager.stop_stream.assert_awaited_once_with(_DEVICE)
-    assert camera._sessions == set()
+    assert session.close_calls == 1
+    camera.coordinator.manager.stop_stream.assert_not_awaited()
+
+
+async def test_removal_with_a_viewer_releases_it_through_the_coordinator(
+    camera: MammotionWebRTCCamera,
+) -> None:
+    """The coordinator decides whether this was the last feed to stop."""
+    camera._sessions["session-1"] = MagicMock()
+
+    await camera.async_will_remove_from_hass()
+
+    camera.coordinator.async_release_camera_session.assert_awaited_once_with(
+        "webrtc_camera"
+    )
+    camera.coordinator.manager.stop_stream.assert_not_awaited()
+
+
+async def test_a_close_after_stop_video_is_not_released_twice(
+    hass: HomeAssistant, camera: MammotionWebRTCCamera
+) -> None:
+    """``stop_video`` ends the viewer, so the frontend's later close is a no-op."""
+    camera._sessions["session-1"] = MagicMock()
+
+    await camera.async_teardown_stream(stop_device=False)
+    _core_teardown(camera, "session-1")
+    await hass.async_block_till_done()
+
+    camera.coordinator.async_release_camera_session.assert_not_awaited()
+
+
+async def test_the_older_viewer_closing_last_still_tears_down(
+    hass: HomeAssistant,
+    camera: MammotionWebRTCCamera,
+    session: FakeAgoraSession,
+) -> None:
+    """Close order must not matter: the newer viewer leaving first used to leak the stream."""
+    camera._sessions.update({"session-1": MagicMock(), "session-2": MagicMock()})
+
+    _core_teardown(camera, "session-2")
+    _core_teardown(camera, "session-1")
+    await hass.async_block_till_done()
+
+    assert session.close_calls == 1
+    camera.coordinator.async_release_camera_session.assert_awaited_once_with(
+        "webrtc_camera"
+    )
 
 
 async def test_reload_does_not_leave_ice_servers_registered(
@@ -240,3 +325,97 @@ async def test_a_token_refresh_reaches_the_next_session(
     servers = async_get_ice_servers(hass)
     assert rotated in servers
     assert _ICE_SERVER not in servers
+
+
+async def test_second_camera_offer_mints_its_own_token(
+    camera: MammotionWebRTCCamera,
+) -> None:
+    """Reusing a sibling's token makes Agora quit the sibling (code 2003)."""
+    camera.coordinator.has_active_camera_sessions = True
+    camera.coordinator.async_check_stream_expiry = AsyncMock(return_value=(None, None))
+    camera.coordinator.async_send_command = AsyncMock()
+
+    await camera.async_handle_async_webrtc_offer("offer-sdp", "session-2", MagicMock())
+
+    camera.coordinator.async_check_stream_expiry.assert_awaited_once_with(force=True)
+
+
+async def test_a_failed_offer_stops_the_stream_it_started(
+    hass: HomeAssistant, camera: MammotionWebRTCCamera
+) -> None:
+    """The token request starts the mower, so an unanswered offer must release it."""
+    camera.coordinator.async_check_stream_expiry = AsyncMock(
+        return_value=(MagicMock(), None)
+    )
+    camera.coordinator.async_send_command = AsyncMock()
+    camera.coordinator.all_cameras_streaming = False
+    right = MammotionWebRTCCamera(camera.coordinator, CAMERAS[1], hass)
+    right.hass = hass
+
+    await right.async_handle_async_webrtc_offer("offer-sdp", "session-1", MagicMock())
+    await hass.async_block_till_done()
+
+    assert right._sessions == {}
+    camera.coordinator.async_release_camera_session.assert_awaited_once_with(
+        "webrtc_camera_right"
+    )
+
+
+async def test_a_close_during_negotiation_is_not_lost(
+    hass: HomeAssistant,
+    camera: MammotionWebRTCCamera,
+    session: FakeAgoraSession,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Navigating away before the answer arrives must still stop the stream."""
+    created = install_fake_sessions(
+        monkeypatch, on_join=lambda: _core_teardown(camera, "session-1")
+    )
+    camera.coordinator.async_check_stream_expiry = AsyncMock(
+        return_value=(make_stream_data(), make_ap_response())
+    )
+    camera.coordinator.async_send_command = AsyncMock()
+    camera.coordinator.is_on_4g = False
+
+    await camera.async_handle_async_webrtc_offer("offer-sdp", "session-1", MagicMock())
+    await hass.async_block_till_done()
+
+    assert camera._sessions == {}
+    camera.coordinator.async_release_camera_session.assert_awaited_with("webrtc_camera")
+    # The previous viewer's session is replaced, and the new one is not left open.
+    assert session.close_calls == 1
+    assert [s.close_calls for s in created] == [1]
+    assert camera._session is None
+
+
+async def test_a_feed_agora_quit_tells_its_viewers_and_is_released(
+    hass: HomeAssistant,
+    camera: MammotionWebRTCCamera,
+    session: FakeAgoraSession,
+) -> None:
+    """A sibling camera joining kicks this one; the card shows why instead of freezing."""
+    viewer = MagicMock()
+    camera._sessions["session-1"] = viewer
+
+    await session.end(CloseReason.GATEWAY_QUIT)
+
+    assert camera._sessions == {}
+    error = viewer.call_args.args[0]
+    assert (error.code, error.message) == (
+        "503",
+        "Another camera on this mower took over the stream",
+    )
+    assert session.close_calls == 1
+    camera.coordinator.async_release_camera_session.assert_awaited_once_with(
+        "webrtc_camera"
+    )
+
+
+async def test_a_quit_after_the_viewer_left_does_nothing(
+    camera: MammotionWebRTCCamera, session: FakeAgoraSession
+) -> None:
+    """The frontend already closed it, so there is nothing left to release."""
+    await session.end(CloseReason.GATEWAY_QUIT)
+
+    assert session.close_calls == 0
+    camera.coordinator.async_release_camera_session.assert_not_awaited()

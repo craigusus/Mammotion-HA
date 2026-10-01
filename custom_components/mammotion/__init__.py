@@ -70,6 +70,7 @@ from .const import (
     DOMAIN,
     EXPIRED_CREDENTIAL_EXCEPTIONS,
     LOGGER,
+    NOTIFY_SELF_CHECK,
     NOTIFY_WARNINGS,
     POOL_CLEANER_SUPPORT,
 )
@@ -82,6 +83,8 @@ from .coordinator import (
     MammotionRTKCoordinator,
     MammotionSpinoCoordinator,
 )
+from .entity import async_remove_retired_entities
+from .error_codes import async_preload_error_codes
 from .models import (
     MammotionDevices,
     MammotionMowerData,
@@ -123,7 +126,7 @@ def _clear_cached_credentials(hass: HomeAssistant, entry: MammotionConfigEntry) 
     )
 
 
-async def _async_attempt_login(
+async def _async_attempt_login(  # noqa: C901
     hass: HomeAssistant,
     entry: MammotionConfigEntry,
     mammotion: MammotionClient,
@@ -397,10 +400,22 @@ async def async_migrate_entry(hass: HomeAssistant, entry: MammotionConfigEntry) 
             entry, options=options, version=1, minor_version=3
         )
 
+    if entry.version == 1 and entry.minor_version < 4:
+        # Self-check notifications are on by default; a list saved before the
+        # category existed cannot have turned it off, so add it.
+        options = dict(entry.options)
+        if (notify := options.get(CONF_NOTIFY)) is not None and (
+            NOTIFY_SELF_CHECK not in notify
+        ):
+            options[CONF_NOTIFY] = [*notify, NOTIFY_SELF_CHECK]
+        hass.config_entries.async_update_entry(
+            entry, options=options, version=1, minor_version=4
+        )
+
     return True
 
 
-async def async_setup_entry(hass: HomeAssistant, entry: MammotionConfigEntry) -> bool:
+async def async_setup_entry(hass: HomeAssistant, entry: MammotionConfigEntry) -> bool:  # noqa: C901
     """Set up Mammotion from a config entry.
 
     Blocks only on the store, BLE registration and the cloud login.  Coordinators
@@ -414,6 +429,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: MammotionConfigEntry) ->
 
     store = async_get_store(hass, entry)
     await store.async_load_device_data()
+    await async_preload_error_codes(hass)
 
     async def shutdown_mammotion(_: Event | None = None) -> None:
         await mammotion.stop()
@@ -676,6 +692,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: MammotionConfigEntry) ->
     # lookup during entity setup (e.g. sensor native_value) doesn't block on disk.
     await hass.async_add_executor_job(bundled_error_codes)
 
+    async_remove_retired_entities(hass, mammotion_mowers)
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
     # Unload cancels it explicitly (Home Assistant cancels entry tasks only after
