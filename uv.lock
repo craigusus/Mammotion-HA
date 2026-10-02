@@ -1502,7 +1502,7 @@ wheels = [
 
 [[package]]
 name = "mammotion-ha"
-version = "0.6.12"
+version = "0.6.14"
 source = { virtual = "." }
 dependencies = [
     { name = "autotyping" },
@@ -1529,7 +1529,7 @@ requires-dist = [
     { name = "autotyping", specifier = ">=24.3.0" },
     { name = "homeassistant", specifier = ">=2026.1.0" },
     { name = "pyagorartc", specifier = "==0.2.3" },
-    { name = "pymammotion", specifier = "==0.10.3" },
+    { name = "pymammotion", specifier = "==0.10.5" },
 ]
 
 [package.metadata.requires-dev]
@@ -2170,7 +2170,7 @@ wheels = [
 
 [[package]]
 name = "pymammotion"
-version = "0.10.3"
+version = "0.10.5"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiohttp" },
@@ -2195,9 +2195,9 @@ dependencies = [
     { name = "webrtc-models" },
     { name = "websockets" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/fc/05/55ec6608b25120c00dfaa128cb710220ffaad693defc0456bfb2f5fb16e3/pymammotion-0.10.3.tar.gz", hash = "sha256:7070a7f745be4db1b4471c3f005f7556fdd50fd935c79366841970f34d1b23ae", size = 745484, upload-time = "2026-10-01T18:52:19.083Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/79/7d/868ccc9f2c705816f868d4186039836eac45f1fea166834db4a7a4984333/pymammotion-0.10.5.tar.gz", hash = "sha256:e737bfb5254d764a45d3872a300c0c037b45c85e49970b8dc5cba871af4b562d", size = 750133, upload-time = "2026-10-02T09:31:14.926Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/a8/bc/600ebe1a824ed600a33db5ae579d6a9299c10e06a05cd69fd6217234b9c1/pymammotion-0.10.3-py3-none-any.whl", hash = "sha256:aa38bf7df311545e4d76633982e9301af3df65648e834290b30d28d0dde736a4", size = 830056, upload-time = "2026-10-01T18:52:17.154Z" },
+    { url = "https://files.pythonhosted.org/packages/8b/50/92a146212343a168f873f57ff6a4eeb288e0be324ba2330ec337a6677aff/pymammotion-0.10.5-py3-none-any.whl", hash = "sha256:e5bdd47dee94cc9b079cf03fec637cd0b2ce00c1c7201f2fd728b6b109e4dbc3", size = 835045, upload-time = "2026-10-02T09:31:12.655Z" },
 ]
 
 [[package]]
